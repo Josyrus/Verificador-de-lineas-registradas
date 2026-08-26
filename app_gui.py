@@ -6,7 +6,7 @@ portal oficial (no automatiza CAPTCHAs), y guarda/exporta el progreso."""
 import sys, webbrowser
 from pathlib import Path  
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve
-from PySide6.QtGui import QDesktopServices, QAction, QIcon
+from PySide6.QtGui import QDesktopServices, QAction, QIcon, QPixmap, QPainter, QFont
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
@@ -228,7 +228,10 @@ class VentanaPrincipal(QMainWindow):
         self.tabla.setRowCount(len(CARRIERS))
         for row, (nombre, url) in enumerate(CARRIERS):
             item_nombre = QTableWidgetItem(nombre)
+            icono_red = QLabel()
+            icono_red.setPixmap(QPixmap())
             item_nombre.setData(Qt.ItemDataRole.UserRole, url)
+            self.tabla.setItem(row, COL_COMPANIA, icono_red)
             self.tabla.setItem(row, COL_COMPANIA, item_nombre)
 
             combo = QComboBox()
