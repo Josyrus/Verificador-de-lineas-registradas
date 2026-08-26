@@ -7,7 +7,7 @@ y llevar el control de en cuáles tienes líneas registradas a tu CURP.
 
 ## Por qué no es 100% automática
 
-Revisé varios portales (Telcel, el backend compartido de Altán Redes que
+Varios portales (Telcel, el backend compartido de Altán Redes que
 usan ~70 compañías, etc.): todos están protegidos con CAPTCHA / detección
 de bots y flujos de verificación en JavaScript. Eso es intencional — son
 formularios que exponen datos ligados a tu identidad (CURP), así que están
