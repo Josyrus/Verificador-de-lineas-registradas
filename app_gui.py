@@ -236,10 +236,13 @@ class VentanaPrincipal(QMainWindow):
             if nombre == "Redes ALTÁN":
                 aclaracion = QLabel()
                 aclaracion.setPixmap(QIcon(str(RESOURCES_DIR / "aclaracion.svg")).pixmap(20, 20))
-                texto_aclaracion= "Redes ALTÁN son todas quellos provedores de red virtuales que reutilizan la misma infraestructura" + ALTAN_ALIASES
-                aclaracion.setToolTip(
-                    str("Redes ALTÁN son todas quellos provedores de red virtuales que reutilizan la misma infraestructura"))
+                texto_aclaracion = (
+                    "Redes ALTÁN son todos aquellos proveedores de red virtuales "
+                    "que reutilizan la misma infraestructura: "
+                    + ", ".join(ALTAN_ALIASES.keys()))
+                aclaracion.setToolTip(texto_aclaracion)
                 layout.addWidget(aclaracion)
+                layout.addStretch()
 
 
             contenedor.setProperty("nombre", nombre)
