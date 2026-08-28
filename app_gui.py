@@ -12,8 +12,8 @@ from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
     QComboBox, QHeaderView, QFileDialog, QMessageBox, QStatusBar, QButtonGroup,
 )
-
-from carriers import CARRIERS
+import random
+from carriers import CARRIERS, ALTAN_ALIASES
 from storage import ESTADOS, DEFAULT_PATH, cargar, guardar
 
 COL_COMPANIA, COL_ESTADO, COL_NOTAS, COL_ABRIR = range(4)
@@ -227,12 +227,25 @@ class VentanaPrincipal(QMainWindow):
     def _poblar_tabla(self):
         self.tabla.setRowCount(len(CARRIERS))
         for row, (nombre, url) in enumerate(CARRIERS):
-            item_nombre = QTableWidgetItem(nombre)
-            icono_red = QLabel()
-            icono_red.setPixmap(QPixmap())
-            item_nombre.setData(Qt.ItemDataRole.UserRole, url)
-            self.tabla.setItem(row, COL_COMPANIA, icono_red)
-            self.tabla.setItem(row, COL_COMPANIA, item_nombre)
+
+            contenedor = QWidget()
+            layout = QHBoxLayout(contenedor)
+            layout.setContentsMargins(5, 0, 5, 0)
+            layout.addWidget(self.crear_avatar(nombre))
+            layout.addWidget(QLabel(nombre))
+            if nombre == "Redes ALTÁN":
+                aclaracion = QLabel()
+                aclaracion.setPixmap(QIcon(str(RESOURCES_DIR / "aclaracion.svg")).pixmap(20, 20))
+                texto_aclaracion= "Redes ALTÁN son todas quellos provedores de red virtuales que reutilizan la misma infraestructura" + ALTAN_ALIASES
+                aclaracion.setToolTip(
+                    str("Redes ALTÁN son todas quellos provedores de red virtuales que reutilizan la misma infraestructura"))
+                layout.addWidget(aclaracion)
+
+
+            contenedor.setProperty("nombre", nombre)
+            contenedor.setProperty("url", url)
+
+            self.tabla.setCellWidget(row, COL_COMPANIA, contenedor)
 
             combo = QComboBox()
             combo.addItems(ESTADOS)
@@ -250,6 +263,66 @@ class VentanaPrincipal(QMainWindow):
             self.tabla.setCellWidget(row, COL_ABRIR, boton)
 
     # ---------- acciones ----------
+    def crear_avatar(self,nombre):
+        size =20
+        label = QLabel()
+        label.setFixedSize(size, size)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        if nombre == "Redes ALTÁN":
+            label.setPixmap(QIcon(str(RESOURCES_DIR / "señal.svg")).pixmap(size, size))
+            return label
+
+        # Inicial
+        inicial = nombre[0].upper()
+
+        colores = [
+        "#E57373",  # rojo
+        "#64B5F6",  # azul
+        "#81C784",  # verde
+        "#FFB74D",  # naranja
+        "#BA68C8",  # púrpura
+        "#4DB6AC",  # verde azulado (teal)
+        "#F06292",  # rosa
+        "#9575CD",  # violeta
+        "#4FC3F7",  # azul claro
+        "#AED581",  # verde lima
+        "#FFD54F",  # amarillo
+        "#A1887F",  # marrón
+        "#90A4AE",  # gris azulado
+        "#7986CB",  # índigo
+        "#4DD0E1",  # cian
+        "#DCE775",  # lima claro
+        "#FF8A65",  # naranja profundo
+        "#F06060",  # rojo coral
+        "#BDBDBD",  # gris
+        "#FFF176",  # amarillo claro
+    ]
+
+        pixmap = QPixmap(size, size)
+        pixmap.fill(random.choice(colores))
+
+        painter = QPainter(pixmap)
+
+        font = QFont()
+        font.setBold(True)
+        font.setPointSize(size // 2)
+
+        painter.setFont(font)
+        painter.setPen(Qt.GlobalColor.white)
+
+        painter.drawText(
+            pixmap.rect(),
+            Qt.AlignmentFlag.AlignCenter,
+            inicial
+        )
+
+        painter.end()
+
+        label.setPixmap(pixmap)
+
+        return label
+
 
     def _guardar_datos_personales(self):
         self.data["curp"] = self.campo_curp.text().strip().upper()
@@ -288,7 +361,9 @@ class VentanaPrincipal(QMainWindow):
 
     def _seleccionar_fila(self, nombre):
         for row in range(self.tabla.rowCount()):
-            if self.tabla.item(row, COL_COMPANIA).text() == nombre:
+            contenedor = self.tabla.cellWidget(row, COL_COMPANIA)
+            nombre_compañia = contenedor.property("nombre").lower()
+            if nombre_compañia == nombre:
                 self.tabla.selectRow(row)
                 self.tabla.scrollToItem(self.tabla.item(row, COL_COMPANIA))
                 break
@@ -296,7 +371,8 @@ class VentanaPrincipal(QMainWindow):
     def _filtrar_nombre(self, texto):
         texto = texto.strip().lower()
         for row in range(self.tabla.rowCount()):
-            nombre = self.tabla.item(row, COL_COMPANIA).text().lower()
+            contenedor = self.tabla.cellWidget(row, COL_COMPANIA)
+            nombre = contenedor.property("nombre").lower()
             self.tabla.setRowHidden(row, texto not in nombre)
 
     def _filtrar_estado(self, estado):
