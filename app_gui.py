@@ -6,7 +6,7 @@ portal oficial (no automatiza CAPTCHAs), y guarda/exporta el progreso."""
 import sys, webbrowser
 from pathlib import Path  
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve
-from PySide6.QtGui import QDesktopServices, QAction, QIcon, QPixmap, QPainter, QFont
+from PySide6.QtGui import QDesktopServices, QAction, QIcon, QPixmap, QPainter, QFont, QColor
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
@@ -15,10 +15,20 @@ from PySide6.QtWidgets import (
 import random
 from carriers import CARRIERS, ALTAN_ALIASES
 from storage import ESTADOS, DEFAULT_PATH, cargar, guardar
+from checker.runner import CheckerRunner
 
 COL_COMPANIA, COL_ESTADO, COL_NOTAS, COL_ABRIR = range(4)
 
 RESOURCES_DIR = Path(__file__).resolve().parent / "media/svg"
+
+COLOR_ESTADO = {
+    "Pendiente": "#f5a623",          # naranja
+    "Línea encontrada": "#4caf50",   # verde
+    "Sin línea": "#9e9e9e",          # gris
+    "No se pudo revisar": "#e57373", # rojo
+}
+
+
 
 class IconButton(QPushButton):
     def __init__(self, text, icon, icon_position="left", parent=None):
@@ -32,6 +42,7 @@ class IconButton(QPushButton):
 
 class VentanaPrincipal(QMainWindow):
     def __init__(self):
+        self.checker_runner = CheckerRunner()
         super().__init__()
         self.setWindowTitle("Líneas registradas a mi CURP — consulta guiada")
         self.resize(920, 620)
@@ -244,14 +255,18 @@ class VentanaPrincipal(QMainWindow):
                 layout.addWidget(aclaracion)
                 layout.addStretch()
 
-
             contenedor.setProperty("nombre", nombre)
             contenedor.setProperty("url", url)
 
             self.tabla.setCellWidget(row, COL_COMPANIA, contenedor)
 
             combo = QComboBox()
-            combo.addItems(ESTADOS)
+            combo = QComboBox()
+            for estado in ESTADOS:
+                combo.addItem(self.crear_icono_punto(COLOR_ESTADO[estado]), estado)
+            combo.setIconSize(QSize(10, 10))
+            estado_actual = self.data["resultados"][nombre]["estado"]
+            combo.setCurrentText(estado_actual)
             estado_actual = self.data["resultados"][nombre]["estado"]
             combo.setCurrentText(estado_actual)
             combo.currentTextChanged.connect(lambda texto, n=nombre: self._cambiar_estado(n, texto))
@@ -266,6 +281,18 @@ class VentanaPrincipal(QMainWindow):
             self.tabla.setCellWidget(row, COL_ABRIR, boton)
 
     # ---------- acciones ----------
+    def crear_icono_punto(self, color: str, size: int = 10) -> QIcon:
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(QColor(color))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(0, 0, size, size)
+        painter.end()
+        return QIcon(pixmap)
+
+
     def crear_avatar(self,nombre):
         size =20
         label = QLabel()
@@ -342,13 +369,26 @@ class VentanaPrincipal(QMainWindow):
         guardar(self.data, DEFAULT_PATH)
 
     def _abrir_portal(self, nombre, url):
+
         curp = self.campo_curp.text().strip().upper()
-        if curp:
-            QApplication.clipboard().setText(curp)
-            self.barra_estado.showMessage(f"CURP copiada al portapapeles — abriendo {nombre}", 4000)
-        else:
-            self.barra_estado.showMessage(f"Abriendo {nombre} (no hay CURP capturada)", 4000)
-        webbrowser.open(url)
+
+        if not curp:
+            self.barra_estado.showMessage(
+                "No hay una CURP capturada.",
+                4000
+            )
+            return
+
+        QApplication.clipboard().setText(curp)
+
+        ejecutado = self.checker_runner.ejecutar(
+            nombre=nombre,
+            curp=curp,
+            telefonos=self.data.get("telefonos", [])
+        )
+
+        if not ejecutado:
+            webbrowser.open(url)
 
     def _limpiar(self):
         self.campo_curp.setText("")
@@ -370,6 +410,9 @@ class VentanaPrincipal(QMainWindow):
                 self.tabla.selectRow(row)
                 self.tabla.scrollToItem(self.tabla.item(row, COL_COMPANIA))
                 break
+    def texto_estado_con_punto(estado: str) -> str:
+        color = COLOR_ESTADO.get(estado, "#9e9e9e")
+        return f'<span style="color:{color};">●</span>&nbsp;{estado}'
 
     def _filtrar_nombre(self, texto):
         texto = texto.strip().lower()

@@ -1,0 +1,22 @@
+{
+    "nombre": "Redes ALTÁN",
+    "url": "https://rnu.altanredes.com/consulta",
+
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[placeholder='CURP']",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//button[normalize-space()='Buscar']"
+        },
+        {
+            "action": "pause",
+            "message": "Completa el CAPTCHA si aparece y presiona ENTER"
+        }
+    ]
+}
