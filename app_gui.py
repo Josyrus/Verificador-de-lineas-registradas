@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QComboBox, QHeaderView, QFileDialog, QMessageBox, QStatusBar, QButtonGroup,
 )
 import random
-from carriers import CARRIERS, ALTAN_ALIASES
+from carriers import CARRIERS, PORTAL_ALIASES
 from storage import ESTADOS, DEFAULT_PATH, cargar, guardar
 from checker.runner import CheckerRunner
 
@@ -244,13 +244,21 @@ class VentanaPrincipal(QMainWindow):
             layout.setContentsMargins(5, 0, 5, 0)
             layout.addWidget(self.crear_avatar(nombre))
             layout.addWidget(QLabel(nombre))
-            if nombre == "Redes ALTÁN":
+
+            alias = [alias for alias,
+                portal in PORTAL_ALIASES.items()
+                if portal == nombre
+                ] 
+            if alias:
                 aclaracion = QLabel()
                 aclaracion.setPixmap(QIcon(str(RESOURCES_DIR / "aclaracion.svg")).pixmap(20, 20))
+                
+                
                 texto_aclaracion = (
-                    "Redes ALTÁN son todos aquellos proveedores de red virtuales "
-                    "que reutilizan la misma infraestructura: "
-                    + ", ".join(ALTAN_ALIASES.keys()))
+                    f"{nombre} son todos aquellos proveedores de red virtuales "
+                    f"que reutilizan la misma infraestructura: "
+                    + ", ".join(alias)
+                )
                 aclaracion.setToolTip(texto_aclaracion)
                 layout.addWidget(aclaracion)
                 layout.addStretch()
