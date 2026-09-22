@@ -1,0 +1,54 @@
+{
+  "nombre": "Abib/Internet del Bienestar",
+  "url": "https://www.abibinternetdelbienestar.mx/consultatulinea",
+  "steps": [
+    {
+      "action": "scroll_down",
+      "value": 480
+    },
+    {
+      "action": "click",
+      "type": "xpath",
+      "selector": "//p[contains(.,'Por CURP')]"
+    },
+    {
+      "action": "fill",
+      "type": "css",
+      "selector": "input[placeholder='AAAA######XXXXXX##']",
+      "value": "{curp}"
+    },
+    {
+      "action": "click",
+      "type": "xpath",
+      "selector": "//span[contains(., 'No soy un robot')]"
+    },
+    {
+      "action": "click",
+      "type": "xpath",
+      "selector": "//label[contains(., 'Términos y Condiciones')]"
+    },
+    {
+      "action": "click",
+      "type": "xpath",
+      "selector": "//label[contains(., 'Aviso de Privacidad')]"
+    },
+    {
+      "action": "pause",
+      "time": 0.4
+    },
+    {
+      "action": "script",
+      "script": "[...document.querySelectorAll('button')].find(b => b.innerText.trim() === 'Verificar')?.click();"
+    }
+  ],
+  "results": {
+    "negative": {
+      "type": "xpath",
+      "selector": "//div[contains(normalize-space(.), 'La CURP ingresada no cuenta con números vinculados.')]"
+    },
+    "positive": {
+      "type": "xpath",
+      "selector": "//div[string-length(normalize-space(.)) = 4 and string-length(translate(normalize-space(.), '0123456789', '')) = 0]"
+    }
+  }
+}

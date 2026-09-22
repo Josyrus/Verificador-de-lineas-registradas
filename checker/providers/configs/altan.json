@@ -4,6 +4,9 @@
 
     "steps": [
         {
+            "action": "reach_down"
+        },
+        {
             "action": "fill",
             "type": "css",
             "selector": "input[placeholder='CURP']",
@@ -12,11 +15,39 @@
         {
             "action": "click",
             "type": "xpath",
+            "selector": "//label[contains(., 'Acepto los Términos y Condiciones')]"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//label[contains(., 'Acepto el Aviso de Privacidad')]"
+        },
+        {
+            "action": "click_shadow",
+            "host": "cap-widget",
+            "selector": ".captcha"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
             "selector": "//button[normalize-space()='Buscar']"
         },
         {
             "action": "pause",
-            "message": "Completa el CAPTCHA si aparece y presiona ENTER"
+            "time": 0.8
+        },
+        {
+            "action": "reach_down"
         }
-    ]
+    ],
+     "results": {
+        "positive": {
+            "type": "xpath",
+            "selector": "//p[contains(., 'Coincidencias encontradas')]"
+        },
+        "negative": {
+            "type": "xpath",
+            "selector": "//p[contains(., 'No se encontraron líneas')]"
+        }
+    }
 }

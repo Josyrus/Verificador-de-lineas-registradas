@@ -1,9 +1,12 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.firefox.options import Options
+from undetected_geckodriver import Firefox
 
 def crear_driver():
     options = Options()
-    options.add_argument("--start-maximized")
-
-    return webdriver.Chrome(options=options)    
+    
+    options.set_preference("dom.webdriver.enabled", False)
+    options.profile = "/home/josyrus/perfil-automatizacion"
+    
+    driver = Firefox()
+    return driver

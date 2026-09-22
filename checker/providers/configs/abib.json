@@ -1,0 +1,25 @@
+{
+    "nombre": "Abib",
+    "url": "https://abib.com.mx/#/consultatuslineas",
+        "steps": [
+            {
+                "action":"pause",
+                "time":50 
+            },
+            {
+                "action": "click",
+                "type":"xpath",
+                "selector":"//button[contains(., 'Validar INE')]"
+            }
+        ],
+        "results": {
+        "positive": {
+            "type": "xpath",
+            "selector": "//p[contains(., 'Coincidencias encontradas')]"
+        },
+        "negative": {
+            "type": "xpath",
+            "selector": "//p[contains(., 'ERRORS.BE_MP_BPS_0041_MESSAGE')]"
+        }
+    }
+}

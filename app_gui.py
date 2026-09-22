@@ -3,9 +3,9 @@
 tabla, deja marcar el estado de cada una a mano después de revisar el
 portal oficial (no automatiza CAPTCHAs), y guarda/exporta el progreso."""
 
-import sys, webbrowser
+import sys
 from pathlib import Path  
-from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, QThread, QTimer
 from PySide6.QtGui import QDesktopServices, QAction, QIcon, QPixmap, QPainter, QFont, QColor
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -13,8 +13,9 @@ from PySide6.QtWidgets import (
     QComboBox, QHeaderView, QFileDialog, QMessageBox, QStatusBar, QButtonGroup,
 )
 import random
-from carriers import CARRIERS, PORTAL_ALIASES
+from carriers import CARRIERS, PORTAL_ALIASES, buscar
 from storage import ESTADOS, DEFAULT_PATH, cargar, guardar
+from checker.worker import CheckerWorker
 from checker.runner import CheckerRunner
 
 COL_COMPANIA, COL_ESTADO, COL_NOTAS, COL_ABRIR = range(4)
@@ -27,7 +28,6 @@ COLOR_ESTADO = {
     "Sin línea": "#9e9e9e",          # gris
     "No se pudo revisar": "#e57373", # rojo
 }
-
 
 
 class IconButton(QPushButton):
@@ -44,6 +44,8 @@ class VentanaPrincipal(QMainWindow):
     def __init__(self):
         self.checker_runner = CheckerRunner()
         super().__init__()
+        self.threads = {} 
+        self.workers = {} 
         self.setWindowTitle("Líneas registradas a mi CURP — consulta guiada")
         self.resize(920, 620)
 
@@ -307,7 +309,7 @@ class VentanaPrincipal(QMainWindow):
         label.setFixedSize(size, size)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        if nombre == "Redes ALTÁN":
+        if nombre == "Redes ALTÁN" or nombre == "Freedompop":
             label.setPixmap(QIcon(str(RESOURCES_DIR / "señal.svg")).pixmap(size, size))
             return label
 
@@ -377,26 +379,83 @@ class VentanaPrincipal(QMainWindow):
         guardar(self.data, DEFAULT_PATH)
 
     def _abrir_portal(self, nombre, url):
-
         curp = self.campo_curp.text().strip().upper()
-
         if not curp:
-            self.barra_estado.showMessage(
-                "No hay una CURP capturada.",
-                4000
-            )
+            self.barra_estado.showMessage("No hay una CURP capturada.", 4000)
             return
 
         QApplication.clipboard().setText(curp)
 
-        ejecutado = self.checker_runner.ejecutar(
-            nombre=nombre,
-            curp=curp,
-            telefonos=self.data.get("telefonos", [])
+        thread = QThread()
+        worker = CheckerWorker(
+            self.checker_runner,
+            nombre,
+            curp,
+            self.data.get("telefonos", [])
         )
 
-        if not ejecutado:
-            webbrowser.open(url)
+        worker.moveToThread(thread)
+
+        thread.started.connect(worker.ejecutar)
+        worker.terminado.connect(self.checker_terminado)
+        worker.error.connect(self.checker_error)
+
+        worker.terminado.connect(thread.quit)
+        worker.error.connect(thread.quit)
+
+        worker.terminado.connect(worker.deleteLater)
+        worker.error.connect(worker.deleteLater)
+
+        thread.finished.connect(thread.deleteLater)
+        thread.finished.connect(lambda: self._limpiar_thread(nombre))
+
+        self.threads[nombre] = thread
+        self.workers[nombre] = worker
+
+        thread.start()
+
+    def checker_terminado(self, nombre, resultado):
+        print(f"[<] Resultado de {nombre}: {resultado}")
+
+        if resultado == "positive":
+            estado = ESTADOS[1]  # "Línea encontrada"
+        elif resultado == "negative":
+            estado = ESTADOS[2]  # "Sin línea"
+        else:
+            estado = ESTADOS[3]  # "No se pudo revisar"
+
+        self._cambiar_estado(nombre, estado)
+        self._actualizar_combo_fila(nombre, estado)
+        QTimer.singleShot(5000, self.checker_runner.cerrar)
+
+    def _actualizar_combo_fila(self, nombre, estado):
+        for row in range(self.tabla.rowCount()):
+            contenedor = self.tabla.cellWidget(row, COL_COMPANIA)
+            if contenedor is None:
+                continue
+            if contenedor.property("nombre") == nombre:
+                combo = self.tabla.cellWidget(row, COL_ESTADO)
+                combo.blockSignals(True)
+                combo.setCurrentText(estado)
+                combo.blockSignals(False)
+                break
+
+    def _limpiar_thread(self, nombre):
+        thread = self.threads.get(nombre)
+        if thread is not None:
+            thread.wait() 
+        self.threads.pop(nombre, None)
+        self.workers.pop(nombre, None)
+            
+    def checker_error(self, nombre, mensaje):
+        print(f"[!] Error en {nombre}: {mensaje}")
+
+        estado = ESTADOS[3] 
+        self._cambiar_estado(nombre, estado)
+        self._actualizar_combo_fila(nombre, estado)
+
+        self.barra_estado.showMessage(f"Error al revisar {nombre}: {mensaje}", 6000)
+        
 
     def _limpiar(self):
         self.campo_curp.setText("")
@@ -423,11 +482,21 @@ class VentanaPrincipal(QMainWindow):
         return f'<span style="color:{color};">●</span>&nbsp;{estado}'
 
     def _filtrar_nombre(self, texto):
-        texto = texto.strip().lower()
+        resultados = buscar(texto)
+        nombres_encontrados = {
+            nombre
+            for nombre, url, alias in resultados
+        }
         for row in range(self.tabla.rowCount()):
+
             contenedor = self.tabla.cellWidget(row, COL_COMPANIA)
-            nombre = contenedor.property("nombre").lower()
-            self.tabla.setRowHidden(row, texto not in nombre)
+            nombre = contenedor.property("nombre")
+
+            self.tabla.setRowHidden(
+                row,
+                nombre not in nombres_encontrados
+            )
+        
 
     def _filtrar_estado(self, estado):
         estado = estado.strip().lower()
@@ -471,6 +540,9 @@ class VentanaPrincipal(QMainWindow):
             f"Errores: {conteo['No se pudo revisar']}"
         )
 
+    def closeEvent(self, event):
+        self.checker_runner.cerrar()
+        event.accept()
 
 def main(argv=None):
     app = QApplication(argv or sys.argv)
