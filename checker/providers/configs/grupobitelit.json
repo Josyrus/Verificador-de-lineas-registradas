@@ -1,0 +1,31 @@
+{
+    "nombre": "Grupo Bitelit",
+    "url": "https://rnu.grupobitelit.com/mx/line-status",
+    "steps": [
+        {
+            "action":"pause",
+            "time":2
+        },
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#public-line-status-identifier-value",
+            "value": "{curp}"
+        },       
+        {
+            "action": "select_option",
+            "type": "css",
+            "selector": "#public-line-status-identifier-value",
+            "value": "curp"
+        },
+        {
+            "action":"pause",
+            "time":5
+        },
+        {
+            "action": "click",
+            "type": "css",
+            "selector": "#public-line-status-submit"
+        }
+    ]
+}

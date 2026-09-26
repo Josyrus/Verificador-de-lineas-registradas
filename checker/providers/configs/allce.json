@@ -1,42 +1,5 @@
 {
-    "nombre": "ALLCE",
-    "url": "https://vinculacion.allce.mx/consulta",
-        "steps": [
-             {
-                "action":"fill",
-                "type" :"css",
-                "selector":"input[placeholder='CURP, RFC o Pasaporte']",
-                "value": "{curp}"
-            },
-            {
-                "action": "click",
-                "type":"css",
-                "selector":"input[name='terms_accepted']"
-            },
-            {
-                "action": "click",
-                "type":"css",
-                "selector":"input[name='privacy_accepted']"
-            },
-            {
-                "action":"pause",
-                "time":1.3
-            },
-            {
-                "action":"click",
-                "type":"css",
-                "selector":"input[name='commit']"
-            }
-
-        ],
-        "results": {
-        "positive": {
-            "type": "xpath",
-            "selector": "//span[contains(text(), '****')]"
-        },
-        "negative": {
-            "type": "xpath",
-            "selector": "//p[contains(., 'No encontramos líneas asociadas')]"
-        }
-    }
+  "nombre": "ALLCE",
+  "template": "vinculacion",
+  "url": "https://vinculacion.allce.mx/consulta"
 }

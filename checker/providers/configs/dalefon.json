@@ -1,0 +1,40 @@
+{
+    "nombre":"Dalefon",
+    "url":"https://www.dalefon.mx/vinculatulinea/",
+    "steps":[
+        {
+            "action":"scroll_down",
+            "value":500
+        },
+        {
+            "action":"click",
+            "type":"css",
+            "selector":"button[id='btn-show-linked-lines-component']"
+        },
+        {
+            "action":"scroll_down",
+            "value":20
+        },
+        {
+            "action":"fill",
+            "type":"css",
+            "selector":"input[id='input-linked-line-curp']",
+            "value":"{curp}"
+        },
+        {
+            "action":"click",
+            "type":"css",
+            "selector":"button[id='btn-continue-consult-linked-lines']"
+        }
+    ],
+    "results":{
+        "negative":{
+            "type":"xpath",
+            "selector":"//p[contains(.,'Sin líneas')]"
+        },
+        "positive":{
+            "type":"xpath",
+            "selector":"//span[contains(.,'Estas son tus líneas vinculadas')]"
+        }
+    }
+}

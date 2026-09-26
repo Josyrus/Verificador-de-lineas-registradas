@@ -1,18 +1,18 @@
 {
     "nombre": "Abib",
     "url": "https://abib.com.mx/#/consultatuslineas",
-        "steps": [
-            {
-                "action":"pause",
-                "time":50 
-            },
-            {
-                "action": "click",
-                "type":"xpath",
-                "selector":"//button[contains(., 'Validar INE')]"
-            }
-        ],
-        "results": {
+    "steps": [
+        {
+            "action": "pause",
+            "time": 50
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//button[contains(., 'Validar INE')]"
+        }
+    ],
+    "results": {
         "positive": {
             "type": "xpath",
             "selector": "//p[contains(., 'Coincidencias encontradas')]"

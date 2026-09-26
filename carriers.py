@@ -17,25 +17,24 @@ encontrando (ver buscar()).
 CARRIERS = [
     ("Redes ALTÁN", "https://rnu.altanredes.com/consulta"), #Provedor de varios provedores virutales
     ("Freedompop", "https://vinculatulinea.com/freedompop/my-lines"), # Provedor virtual de Telcel
+    ("Bestel", "https://facturacion.bestel.com.mx"), #Revisar login PD:2 no tengo idea que tenga que ver con Cablecom y tampoco las ganas de descubrirlo
     ("Abib", "https://abib.com.mx/#/consultatuslineas"),
     ("Abib/Internet del Bienestar", "https://www.abibinternetdelbienestar.mx/consultatulinea"),
     ("ALLCE", "https://vinculacion.allce.mx/consulta"),
     ("Alestra móvil", "https://vinculatulinea.alestra.mx/alestra-movil/vinculacion"),
     ("AT&T, Unefon y WIM marca digital AT&T", "https://att.com.mx/controlpersonal"),
     ("Beneleit Móvil", "https://beneleit.mx/consultalineas"),
-    ("Bestel", "https://facturacion.bestel.com.mx"), #Revisar login
     ("BlackFon", "https://registro.blackfon.mx/consulta"),
     ("BuenoCell", "https://buenocell.mx/consultalineas"),
-    ("Cablecom", "https://facturacion.bestel.com.mx"), #Revisar login
     ("Celsfi", "https://vinculacion.celfi.com.mx/consulta"), 
-    ("Dalefon", "https://www.dalefon.mx/vinculatulinea"),
+    ("Dalefon", "https://www.dalefon.mx/vinculatulinea/"),
     ("Dalefon/Internet para el Bienestar", "https://www.internetbienestarmex.com/vinculatulinea"),
-    ("Diri Móvil", "https://vinculacion.diri.mx/vinculacion/"),
+    ("Diri Móvil", "https://vinculacion.diri.mx/consulta-vinculacion/"),
     ("Dialo", "https://dialo.mx/vinculatulinea/consulta.html"),
-    ("Dua", "https://consulta.logisticaacn.mx"),
-    ("Exis", "https://www.exis.mx/#/gestionatulinea"),
-    ("Fedego!", "https://consulta.logisticaacn.mx"),
-    ("Flash Mobile", "https://consulta.logisticaacn.mx"),
+    ("Dua", "https://vinculacion.dua.mx/consulta-vinculacion/"),
+    ("Exis", "https://www.exis.mx/vinculatulinea"),
+    ("Fedego!", "https://vinculacion.fedego.mx/consulta-vinculacion/"),
+    ("Flash Mobile", "https://vinculacion.miflash.mx/consulta-vinculacion/"),
     ("Grupo Bitelit", "https://rnu.grupobitelit.com/mx/line-status"),
     ("IENTC", "https://vinculacion-consulta.ientc.net/"),
     ("Inxel", "https://inxel.mx/consulta-vinculacion"),
@@ -50,6 +49,7 @@ CARRIERS = [
     ("MoBig", "https://mobig.mx/vinculatulinea/consulta-curp"),
     ("MoBig/Internet para el bienestar", "https://femaseisa.com/vinculatulinea/consulta-curp"),
     ("Mosi", "https://vinculacion.mosi.mx/consulta"),
+    ("Movistar", "https://www.movistar.com.mx/consulta-tu-linea"),
     ("Newww", "https://consultavinculacion.newww.mx"),
     ("Nextor Movil", "https://vinculacion.nextormovil.mx"),
     ("OUI", "https://vinculatulinea.com/oui/my-lines"), # Mismo dominio, diferente ruta
@@ -175,7 +175,8 @@ PORTAL_ALIASES = {
     "Chedraui Móvil":"Freedompop",
     "OXXO CEL": "Freedompop",
     "Uber Cel": "Freedompop",
-    "":"Internet Bienestar",
+    #bestel alias
+    "BuenoCell": "Bestel"
 }
 
 
@@ -184,7 +185,7 @@ _CARRIERS_BY_NAME = {nombre: url for nombre, url in CARRIERS}
 
 
 def _normalizar(texto: str) -> str:
-    """minúsculas y sin acentos, para que 'altan' encuentre 'ALTÁN'."""
+    """minúsculas y sin acentos, para que 'altan' encuentre 'una linea'."""
     import unicodedata
     sin_acentos = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
     return sin_acentos.lower()

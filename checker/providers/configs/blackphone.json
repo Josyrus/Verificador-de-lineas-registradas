@@ -1,0 +1,36 @@
+{
+    "nombre": "BlackFon",
+    "url": "https://registro.blackfon.mx/consulta",
+    "steps": [
+        {
+            "action": "select_option",
+            "type": "css",
+            "selector": "#consultaTipo",
+            "value": "curp"
+        },
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#consultaValor",
+            "value": "{curp}"
+        },
+        {
+            "action": "scroll_down"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//*[@id='consulta']/div[2]/div/div/button[1]"
+        }
+    ],
+    "results": {
+        "positive": {
+            "type": "xpath",
+            "selector": "//span[contains(@class, 'label') and contains(., 'Número')]/following-sibling::span"
+        },
+        "negative": {
+            "type": "xpath",
+            "selector": "//h2[@id='swal2-title' and text()='Elementos no encontrados']"
+        }
+    }
+}

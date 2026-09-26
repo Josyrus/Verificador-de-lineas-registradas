@@ -1,0 +1,52 @@
+{
+    "nombre": "AT&T, Unefon y WIM marca digital AT&T",
+    "url": "https://att.com.mx/controlpersonal",
+    "steps": [
+        {
+            "action": "wait_if_captcha",
+            "type": "css",
+            "selector": "div[title*='reCAPTCHA']"
+        },
+        {
+            "action": "fill_shadow",
+            "type": "css",
+            "host": "afc-input",
+            "selector": "input[aria-label='Ingresa texto, email o contraseña']",
+            "value": "{curp}"
+        },
+        {
+            "action": "pause",
+            "time": 0.3
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//button[.//span[contains(.,'Consultar mis líneas')]]"
+        },
+        {
+            "action": "click_shadow",
+            "host": "div.tyc.animate__animated.animate__fadeIn > div.contAccept:nth-of-type(2) afc-checkbox",
+            "selector": "input[aria-label='He leído y acepto']"
+        },
+        {
+            "action": "click_shadow",
+            "host": "div.tyc.animate__animated.animate__fadeIn > div.contAccept:nth-of-type(3) afc-checkbox",
+            "selector": "input[aria-label='He leído y acepto']"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//button[.//span[text()='Continuar']]"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//div[contains(., 'No se encontraron')]"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//button[contains(., 'Desvincular')]"
+        }
+    }
+}

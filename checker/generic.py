@@ -12,12 +12,9 @@ from storage import ESTADOS, DEFAULT_PATH, guardar
 
 class GenericChecker:
 
-    def __init__(self, driver, config_path):
+    def __init__(self, driver, config):
         self.driver = driver
-
-        with open(config_path, "r", encoding="utf-8") as f:
-            self.config = json.load(f)
-
+        self.config = config
         self.wait = WebDriverWait(driver, 15)
 
     def _locator(self, step):
@@ -35,7 +32,6 @@ class GenericChecker:
         )
 
     def detectar_resultado(self, timeout=30):
-
         estrategia = self.config.get("result_strategy", "dom")
 
         if estrategia == "livewire":
@@ -70,6 +66,7 @@ class GenericChecker:
             return None
         
     def detectar_resultado_livewire(self, timeout=30):
+        
 
         limite = time.time() + timeout
 
@@ -92,8 +89,6 @@ class GenericChecker:
                         snapshot = json.loads(raw)
                         data = snapshot.get("data", {})
 
-                        # Componente que contiene el estado
-                        # de la consulta.
                         if (
                             "paso2" not in data
                             or "encontrado" not in data
@@ -131,7 +126,7 @@ class GenericChecker:
     def ejecutar(self, **variables):
 
         self.driver.get(self.config["url"])
-
+        
         for step in self.config["steps"]:
             
             action = step["action"]
@@ -139,7 +134,21 @@ class GenericChecker:
             if action == "reach_down":
                 time.sleep(1)
                 self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            
+
+
+            elif action == "switch_to_frame":
+
+                by, selector = self._locator(step)
+
+                iframe = self.wait.until(
+                    EC.presence_of_element_located((by, selector))
+                )
+
+                self.driver.switch_to.frame(iframe)
+
+                print(f"[>] Cambiado a iframe: {selector}")
+
+                
             elif action == "scroll_down":
                 value = step.get("value", 50)
                 self.driver.execute_script(f"window.scrollTo(0, {value});")
@@ -186,9 +195,21 @@ class GenericChecker:
                 print("BY:", by)
                 print("SELECTOR:", selector)
 
-                elemento = self.wait.until(
-                    EC.element_to_be_clickable((by, selector))
+                timeout = step.get("timeout", 15)
+
+                elemento = WebDriverWait(
+                    self.driver,
+                    timeout
+                ).until(
+                    lambda d: (
+                        (e := d.find_element(by, selector))
+                        and e.is_displayed()
+                        and e.is_enabled()
+                        and e.get_attribute("disabled") is None
+                        and e.get_attribute("aria-disabled") != "true"
+                    ) and e
                 )
+
 
                 print("FOUND:", elemento.tag_name)
                 print("TEXT:", repr(elemento.text))
@@ -198,7 +219,25 @@ class GenericChecker:
                 print("CLICK OK")
                 print("====================")
 
+            elif action == "wait_if_captcha":
+
+                by, selector = self._locator(step)
+
+                elementos = self.driver.find_elements(by, selector)
+
+                if not elementos:
+                    print("[>] CAPTCHA no presente, continuando")
+                    continue
+
+                print("[!] CAPTCHA detectado. Esperando resolución...")
+
+                WebDriverWait(self.driver, 300).until(
+                    lambda driver: not driver.find_elements(by, selector)
+                )
+
+                print("[>] CAPTCHA resuelto, continuando")
             elif action == "click_shadow":
+                
                 host = self.wait.until(
                     EC.presence_of_element_located(
                         (By.CSS_SELECTOR, step["host"])
@@ -213,6 +252,33 @@ class GenericChecker:
                 )
 
                 elemento.click()
+                
+            elif action == "fill_shadow":
+                host_by, host_selector = self._locator({
+                    "type": step["type"],
+                    "selector": step["host"]
+                })
+
+                host = self.wait.until(
+                    EC.presence_of_element_located(
+                        (host_by, host_selector)
+                    )
+                )
+
+                shadow = host.shadow_root
+
+                by, selector = self._locator(step)
+
+                elemento = shadow.find_element(by, selector)
+
+                valor = step["value"].format(**variables)
+
+                print(f"[>] Rellenando Shadow DOM: {selector}")
+                print(f"[>] Valor: {valor}")
+
+                elemento.click()
+                elemento.clear()
+                elemento.send_keys(valor)
 
             elif action == "select_option":
                 by, selector = self._locator(step)

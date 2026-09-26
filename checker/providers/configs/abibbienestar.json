@@ -48,7 +48,7 @@
     },
     "positive": {
       "type": "xpath",
-      "selector": "//div[string-length(normalize-space(.)) = 4 and string-length(translate(normalize-space(.), '0123456789', '')) = 0]"
+      "selector": "//div[string-length(normalize-space(.)) = 10 and string-length(translate(normalize-space(.), '0123456789', '')) = 0]"
     }
   }
 }

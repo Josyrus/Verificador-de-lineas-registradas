@@ -1,0 +1,31 @@
+{
+    "nombre": "BuenoCell",
+    "url": "https://buenocell.mx/consultalineas",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[autocapitalize='characters']",
+            "value": "{curp}"
+        },
+        {
+            "action": "pause"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "timeout": 300,
+            "selector": "/html/body/div[1]/div/main/section/div/div[4]/button"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//h1[contains(., 'No encontramos')]"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//span[contains(text(), '****')]"
+        }
+    }
+}

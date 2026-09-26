@@ -1,43 +1,43 @@
 {
     "nombre": "Freedompop",
     "url": "https://vinculatulinea.com/freedompop/my-lines",
-        "steps": [
-            {
-                "action": "select_option",
-                "type": "css",
-                "selector": "#personType",
-                "value": "FISICA"
-            },
-            {
-                "action": "fill",
-                "type": "css",
-                "selector": "input[placeholder='Enter your CURP']",
-                "value": "{curp}"
-            },
-            {
-                "action": "click",
-                "type": "xpath",
-                "selector": "//label[contains(., 'I acknowledge')]"
-            },
-            {
-                "action": "click",
-                "type": "xpath",
-                "selector": "//span[contains(., 'Continue')]"
-            },
-            {
+    "steps": [
+        {
+            "action": "select_option",
+            "type": "css",
+            "selector": "#personType",
+            "value": "FISICA"
+        },
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[placeholder='Enter your CURP']",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//label[contains(., 'I acknowledge')]"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//span[contains(., 'Continue')]"
+        },
+        {
             "action": "wait4captcha",
             "type": "class",
-            "selector":"puzzle-captcha-container"
-            }
-        ],
-        "results": {
+            "selector": "puzzle-captcha-container"
+        }
+    ],
+    "results": {
         "positive": {
             "type": "xpath",
-            "selector": "//p[contains(., 'Coincidencias encontradas')]"
+            "selector": "//span[contains(., 'No cuentas con líneas')]"
         },
         "negative": {
             "type": "xpath",
-            "selector": "//p[contains(., 'ERRORS.BE_MP_BPS_0041_MESSAGE')]"
+            "selector": "//span[contains(., 'líneas asociadas')]"
         }
     }
 }

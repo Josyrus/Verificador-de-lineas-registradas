@@ -7,14 +7,31 @@ import json
 BASE_DIR = Path(__file__).resolve().parent
 
 CONFIG_DIR = BASE_DIR / "providers" / "configs"
+TEMPLATE_DIR = BASE_DIR / "providers" / "templates"
+
+def cargar_config(archivo):
+    with open(archivo, "r", encoding="utf-8") as f:
+        config = json.load(f)
+
+    template = config.get("template")
+
+    if template:
+        template_path = TEMPLATE_DIR / f"{template}.json"
+
+        with open(template_path, "r", encoding="utf-8") as f:
+            base = json.load(f)
+
+        base.update(config)
+        config = base
+
+    return config
+
 
 CONFIGS = {}
 
 for archivo in CONFIG_DIR.glob("*.json"):
-    with open(archivo, "r", encoding="utf-8") as f:
-        config = json.load(f)
-
-    CONFIGS[config["nombre"]] = archivo
+    config = cargar_config(archivo)
+    CONFIGS[config["nombre"]] = config
     
 class CheckerRunner:
 
@@ -22,10 +39,11 @@ class CheckerRunner:
         self.driver = None
 
     def ejecutar(self, nombre, curp, telefonos=None):
-
         config = CONFIGS.get(nombre)
+
         print(f"[>] Proveedor: {nombre}")
         print(f"[>] Configuración: {config}")
+        print(f"[DEBUG] config existe: {config is not None}")
 
         if config is None:
             return "unknown"
@@ -38,13 +56,15 @@ class CheckerRunner:
                 self.driver,
                 config
             )
-        
+
             return checker.ejecutar(
                 curp=curp,
                 telefonos=telefonos or []
             )
-        except Exception:
-            self.cerrar(forzar=True)   
+
+        except Exception as e:
+            print(f"[DEBUG] EXCEPCIÓN REAL: {type(e).__name__}: {e}")
+            self.cerrar(forzar=True)
             raise
 
     def cerrar(self, forzar=False):

@@ -1,0 +1,25 @@
+{
+    "steps": [
+        {
+            "action": "fill",
+            "type": "class",
+            "selector": "pill-input",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "class",
+            "selector": "btn-diri"
+        }
+    ],
+    "results": {
+        "positive": {
+            "type": "xpath",
+            "selector": "//p[contains(.,'línea(s) vinculada(s)')]"
+        },
+        "negative": {
+            "type": "xpath",
+            "selector": "//p[contains(.,'Sin líneas')]"
+        }
+    }
+}
