@@ -2,7 +2,7 @@ from pathlib import Path
 
 from .browser import crear_driver
 from .generic import GenericChecker
-import json
+import json, traceback
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -37,26 +37,30 @@ class CheckerRunner:
 
     def __init__(self):
         self.driver = None
+        self.navegador = "Firefox"
+        self.perfil = ""
+
+    def configurar(self, navegador, perfil):
+        if (navegador, perfil) != (self.navegador, self.perfil):
+            self.cerrar()
+        self.navegador = navegador
+        self.perfil = perfil
 
     def ejecutar(self, nombre, curp, telefonos=None):
         config = CONFIGS.get(nombre)
 
         print(f"[>] Proveedor: {nombre}")
-        print(f"[>] Configuración: {config}")
         print(f"[DEBUG] config existe: {config is not None}")
 
         if config is None:
             return "unknown"
 
         if self.driver is None:
-            self.driver = crear_driver()
+            self.driver = crear_driver(self.navegador, self.perfil)
 
+        checker = None
         try:
-            checker = GenericChecker(
-                self.driver,
-                config
-            )
-
+            checker = GenericChecker(self.driver, config)
             return checker.ejecutar(
                 curp=curp,
                 telefonos=telefonos or []
@@ -64,8 +68,13 @@ class CheckerRunner:
 
         except Exception as e:
             print(f"[DEBUG] EXCEPCIÓN REAL: {type(e).__name__}: {e}")
+            traceback.print_exc()
             self.cerrar(forzar=True)
             raise
+
+        finally:
+            if checker is not None and checker.driver is None:
+                self.driver = None
 
     def cerrar(self, forzar=False):
         if self.driver is None:

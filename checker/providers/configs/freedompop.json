@@ -36,8 +36,8 @@
             "selector": "//span[contains(., 'No cuentas con líneas')]"
         },
         "negative": {
-            "type": "xpath",
-            "selector": "//span[contains(., 'líneas asociadas')]"
+            "type": "css",
+            "selector": "#modal-title"
         }
     }
 }

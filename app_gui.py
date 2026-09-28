@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 import random
 from carriers import CARRIERS, PORTAL_ALIASES, buscar
+from checker.perfiles import NAVEGADORES, detectar_perfiles
 from storage import ESTADOS, DEFAULT_PATH, cargar, guardar
 from checker.worker import CheckerWorker
 from checker.runner import CheckerRunner
@@ -67,14 +68,29 @@ class VentanaPrincipal(QMainWindow):
         curp_layout.addWidget(self.campo_curp)
         fila_datos.addLayout(curp_layout)
 
-        telefono_layout = QVBoxLayout()
-        telefono_layout.addWidget(QLabel("Teléfono(s)(opcional)"))
-        self.campo_telefonos = QLineEdit(", ".join(self.data.get("telefonos", [])))
-        self.campo_telefonos.setPlaceholderText("Opcional, separados por coma")
-        self.campo_telefonos.editingFinished.connect(self._guardar_datos_personales)
-        telefono_layout.addWidget(self.campo_telefonos)
-        fila_datos.addLayout(telefono_layout)
-        layout.addLayout(fila_datos)
+        perfil_layout = QVBoxLayout()
+        perfil_layout.addWidget(QLabel("Navegador y perfil de sesión"))
+        fila_perfil = QHBoxLayout()
+
+        self.combo_navegador = QComboBox()
+        self.combo_navegador.addItems(NAVEGADORES)
+        self.combo_navegador.setCurrentText(self.data.get("navegador", NAVEGADORES[0]))
+        self.combo_navegador.currentTextChanged.connect(self._cambiar_navegador)
+        fila_perfil.addWidget(self.combo_navegador)
+
+        self.combo_perfil = QComboBox()
+        self.combo_perfil.setMinimumWidth(220)
+        self.combo_perfil.currentIndexChanged.connect(self._cambiar_perfil)
+        fila_perfil.addWidget(self.combo_perfil, 1)
+
+        self.boton_buscar_perfil = QPushButton("Buscar…")
+        self.boton_buscar_perfil.clicked.connect(self._buscar_perfil_manual)
+        fila_perfil.addWidget(self.boton_buscar_perfil)
+
+        perfil_layout.addLayout(fila_perfil)
+        fila_datos.addLayout(perfil_layout)
+        layout.addLayout(fila_datos) 
+        self._cargar_perfiles()
 
 
         path_icono = RESOURCES_DIR / "borrar.svg"
@@ -366,7 +382,6 @@ class VentanaPrincipal(QMainWindow):
 
     def _guardar_datos_personales(self):
         self.data["curp"] = self.campo_curp.text().strip().upper()
-        self.data["telefonos"] = [t.strip() for t in self.campo_telefonos.text().split(",") if t.strip()]
         guardar(self.data, DEFAULT_PATH)
 
     def _cambiar_estado(self, nombre, estado):
@@ -385,15 +400,17 @@ class VentanaPrincipal(QMainWindow):
             return
 
         QApplication.clipboard().setText(curp)
-
+        self.checker_runner.configurar(
+            self.data.get("navegador", NAVEGADORES[0]),
+            self.data.get("perfil", ""),
+        )
         thread = QThread()
         worker = CheckerWorker(
             self.checker_runner,
             nombre,
             curp,
-            self.data.get("telefonos", [])
+            [],
         )
-
         worker.moveToThread(thread)
 
         thread.started.connect(worker.ejecutar)
@@ -414,6 +431,49 @@ class VentanaPrincipal(QMainWindow):
 
         thread.start()
 
+    def _cargar_perfiles(self):
+        navegador = self.combo_navegador.currentText()
+        guardado = self.data.get("perfil", "")
+
+        self.combo_perfil.blockSignals(True)
+        self.combo_perfil.clear()
+        self.combo_perfil.addItem("Sin perfil (sesión limpia)", "")
+        for nombre, ruta in detectar_perfiles(navegador):
+            self.combo_perfil.addItem(nombre, str(ruta))
+
+        idx = self.combo_perfil.findData(guardado)
+        if guardado and idx == -1: 
+            self.combo_perfil.addItem(Path(guardado).name, guardado)
+            idx = self.combo_perfil.count() - 1
+        self.combo_perfil.setCurrentIndex(max(idx, 0))
+        self.combo_perfil.setToolTip(guardado)
+        self.combo_perfil.blockSignals(False)
+
+    def _cambiar_navegador(self, navegador):
+        self.data["navegador"] = navegador
+        self.data["perfil"] = ""
+        self._cargar_perfiles()
+        self._aplicar_perfil()
+
+    def _cambiar_perfil(self, _indice):
+        self.data["perfil"] = self.combo_perfil.currentData() or ""
+        self.combo_perfil.setToolTip(self.data["perfil"])
+        self._aplicar_perfil()
+
+    def _buscar_perfil_manual(self):
+        carpeta = QFileDialog.getExistingDirectory(
+            self, "Elige la carpeta del perfil", str(Path.home())
+        )
+        if not carpeta:
+            return
+        self.data["perfil"] = carpeta
+        self._cargar_perfiles()
+        self._aplicar_perfil()
+
+    def _aplicar_perfil(self):
+        guardar(self.data, DEFAULT_PATH)
+        self.checker_runner.cerrar()
+
     def checker_terminado(self, nombre, resultado):
         print(f"[<] Resultado de {nombre}: {resultado}")
 
@@ -426,7 +486,7 @@ class VentanaPrincipal(QMainWindow):
 
         self._cambiar_estado(nombre, estado)
         self._actualizar_combo_fila(nombre, estado)
-        QTimer.singleShot(5000, self.checker_runner.cerrar)
+        QTimer.singleShot(2500, self.checker_runner.cerrar)
 
     def _actualizar_combo_fila(self, nombre, estado):
         for row in range(self.tabla.rowCount()):
@@ -459,7 +519,6 @@ class VentanaPrincipal(QMainWindow):
 
     def _limpiar(self):
         self.campo_curp.setText("")
-        self.campo_telefonos.setText("")
 
     def _abrir_siguiente_pendiente(self):
         for nombre, url in CARRIERS:

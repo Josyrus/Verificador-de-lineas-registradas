@@ -27,7 +27,8 @@ DEFAULT_PATH = _config_dir() / "progreso.json"
 def nuevo_progreso() -> dict:
     return {
         "curp": "",
-        "telefonos": [],
+        "navegador": "Firefox",
+        "perfil": "",
         "resultados": {
             nombre: {"estado": "Pendiente", "notas": ""} for nombre, _url in CARRIERS
         },
@@ -43,17 +44,15 @@ def cargar(path: Path = DEFAULT_PATH) -> dict:
     except (json.JSONDecodeError, OSError):
         return nuevo_progreso()
 
-    # Asegurar que compañías nuevas del directorio aparezcan, y no perder
-    # resultados de compañías que el usuario ya revisó.
     base = nuevo_progreso()
     base["curp"] = data.get("curp", "")
-    base["telefonos"] = data.get("telefonos", [])
+    base["navegador"] = data.get("navegador", base["navegador"])
+    base["perfil"] = data.get("perfil", "")
     resultados_guardados = data.get("resultados", {})
     for nombre in base["resultados"]:
         if nombre in resultados_guardados:
             base["resultados"][nombre] = resultados_guardados[nombre]
     return base
-
 
 def guardar(data: dict, path: Path = DEFAULT_PATH) -> None:
     tmp = Path(str(path) + ".tmp")
