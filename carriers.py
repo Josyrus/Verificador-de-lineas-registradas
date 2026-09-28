@@ -45,41 +45,34 @@ CARRIERS = [
     ("Link Móvil", "https://movil.linkteconectamos.com/consultar-vinculacion/"),
     ("Mega Móvil", "https://consultavinculacion.megamovil.mx"),
     ("Mi móvil", "https://vinculacion.mimovil.com.mx/consulta"),
-    ("Mirlo", "https://mirlo.com/vincularlinea/consulta"),
+    ("Mirlo", "https://mirlo.com/vinculatulinea/consulta"),
     ("MoBig", "https://mobig.mx/vinculatulinea/consulta-curp"),
     ("MoBig/Internet para el bienestar", "https://femaseisa.com/vinculatulinea/consulta-curp"),
     ("Mosi", "https://vinculacion.mosi.mx/consulta"),
     ("Movistar", "https://www.movistar.com.mx/consulta-tu-linea"),
     ("Newww", "https://consultavinculacion.newww.mx"),
-    ("Nextor Movil", "https://vinculacion.nextormovil.mx"),
+    ("Nextor Movil", "https://vinculacion.nextormovil.mx/consulta-vinculaciones"),
     ("OUI", "https://vinculatulinea.com/oui/my-lines"), # Mismo dominio, diferente ruta
     ("Oxio", "https://verificar.oxiomobile.com/consultatuslineas"),
     ("Pillofon", "https://vinculacion.pillofon.mx/consulta-vinculacion/"),
     ("Por Amor a Puebla Conecta", "https://www.poramorapueblaconecta.com/consulta-vinculacion"),
     ("Red Aguila", "https://consultavinculacion.redaguila.com.mx"),
-    ("Red Potencia", "https://redpotencia.net/lineasvinculadas"),
-    ("Red Potencia/Internet para el Bienestar", "https://internetbienestar.net/lineasvinculadas"),
-    ("Redphone Koonol", "https://redphone.vinculacion.koonolmexico.com/consulta"),
     ("Redphone", "https://vinculacion.redphone.com.mx/consulta"),
-    ("Sky", "https://micuenta.sky.com.mx"),
+    ("Sky", "https://micuenta.sky.com.mx"), #requiere login
     ("Sorcel", "https://www.soriup.mx/consultavinculacion"),
     ("Telcel", "https://registro.telcel.com/vinculatulinea/#/"),
-    ("Teléfonica Movistar", "https://www.movistar.com.mx/consulta-tu-linea"),
     ("Tokamóvil", "https://tokamovil.mx/cumplimiento/consulta-vinculacion"),
     ("Ubix", "https://www.ubix.mx/consulta-tu-linea/"),
     ("Viasat", "https://viasatprepago.com.mx/vinculatulinea/"),
-    ("Viral Cel", "https://www.viralcel.com/mi-linea"),
+    ("Viral Cel", "https://www.viralcel.com/mi-linea"), #requiere
     ("Virgin Mobile", "https://virginmobile.mx/v1/consultatulinea"),
     ("Weex", "https://weex.mx/consultalineas.html"),
-    ("Wiicel", "https://wiicel.com"),
     ("Yo mobile", "https://mx.yomobile.com/consulta"),
     ("Yobi Telecom", "https://vinculatulinea.com/yobitelecom/my-lines"), # Mismo dominio, diferente ruta
     ("Yu Movil", "https://www.yumovil.com.mx/login") #otro jodido login
 ]
 
-# Nombres comerciales que corren sobre la red de Altán y por lo tanto usan
-# el portal "Redes ALTÁN" de arriba. Se buscan por nombre pero resuelven a
-# esa fila — ver buscar().
+# Nombres comerciales que corren sobre otras redes telcel, altan, diri
 PORTAL_ALIASES = {
     "2y2x": "Redes ALTÁN",
     "Abafon": "Redes ALTÁN",
@@ -144,6 +137,8 @@ PORTAL_ALIASES = {
     "Playcell": "Redes ALTÁN",
     "Red Blak": "Redes ALTÁN",
     "Red Dog": "Redes ALTÁN",
+    "Red Potencia": "Redes ALTÁN",
+    "Red Potencia/Internet para el Bienestar":"Redes ALTÁN",
     "Redicoppel": "Redes ALTÁN",
     "Redy Movil": "Redes ALTÁN",
     "Retemex": "Redes ALTÁN",
@@ -170,6 +165,7 @@ PORTAL_ALIASES = {
     "VivaMX": "Redes ALTÁN",
     "Wiki Katat": "Redes ALTÁN",
     "Wimotelecom": "Redes ALTÁN",
+    "Wiicel":"Redes ALTÁN",
     #freedompop aliases
     "AhorroCel":"Freedompop",
     "Chedraui Móvil":"Freedompop",
@@ -193,11 +189,9 @@ def _normalizar(texto: str) -> str:
 
 def buscar(texto: str):
     """Busca `texto` entre los nombres de CARRIERS y entre PORTAL_ALIASES.
-
     Regresa una lista de tuplas (nombre_a_mostrar, url, alias_de) donde
     alias_de es None si el match fue directo, o el nombre comercial que
-    escribió el usuario si el match vino de un alias de Altán (para poder
-    avisarle "Bnext se revisa en Redes ALTÁN").
+    escribió el usuario si el match vino de un alias.
     """
     texto = _normalizar((texto or "").strip())
     if not texto:

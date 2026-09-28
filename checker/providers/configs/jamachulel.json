@@ -1,0 +1,31 @@
+{
+    "nombre": "Jamachulel Móvil",
+    "url": "https://www.jamachulelmovil.com/consulta-vinculacion",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[placeholder='CUSR850120HOCRLN05']",
+            "value": "{curp}"
+        },
+        {
+            "action": "pause",
+            "time": 5
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//button[normalize-space(.)='Continuar']"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//div[contains(.,'No se encontraron líneas vinculadas')]"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//table[.//th[normalize-space(.)='Línea'] and .//th[normalize-space(.)='Folio']]"
+        }
+    }
+}

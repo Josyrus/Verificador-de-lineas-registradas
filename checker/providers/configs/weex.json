@@ -1,0 +1,27 @@
+{
+    "nombre": "Weex",
+    "url": "https://weex.mx/consultalineas.html",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[maxlength='18']",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "css",
+            "selector": "button[type='submit']"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//div[p[contains(normalize-space(.), 'No se encontraron líneas asociadas')]]"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//button[contains(normalize-space(.), 'Desvincular')]"
+        }
+    }
+}

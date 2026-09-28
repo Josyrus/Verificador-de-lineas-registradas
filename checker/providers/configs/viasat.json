@@ -1,0 +1,28 @@
+{
+    "nombre": "Viasat",
+    "url": "https://viasatprepago.com.mx/vinculatulinea/",
+    "steps": [
+        {
+            "action": "scroll_down",
+            "value": 2200
+        },
+        {
+            "action": "click",
+            "type": "css",
+            "selector": "a[href='#consultaVinculacion']"
+        },
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#field_checkCustCURP",
+            "value": "{curp}"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//p[contains(.,'No se encontraron')]"
+        }
+    },
+    "comentario": "no tengo ni idea como se vea una consulta positiva"
+}

@@ -1,0 +1,28 @@
+{
+    "nombre": "Virgin Mobile",
+    "url": "https://virginmobile.mx/v1/consultatulinea",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#numeroIdentificacion",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "/html/body/app-root/div/app-consulta-tu-linea/div[2]/div/button"
+        }
+        
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//h1[normalize-space(.)='Sin líneas registradas']"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//ul[contains(@class,'lineas-list')]//li[contains(@class,'linea-item')]"
+        }
+    }
+}

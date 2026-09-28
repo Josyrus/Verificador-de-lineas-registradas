@@ -1,0 +1,32 @@
+{
+    "nombre": "Mega Móvil",
+    "url": "https://consultavinculacion.megamovil.mx/",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#curp",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "css",
+            "selector": "#checkDefault"
+        },
+        {
+            "action": "click",
+            "type": "css",
+            "selector": "button[data-action='siguiente']"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "css",
+            "selector": "#numeroForm"
+        },
+        "positive": {
+            "type": "css",
+            "selector": "..."
+        }
+    }
+}

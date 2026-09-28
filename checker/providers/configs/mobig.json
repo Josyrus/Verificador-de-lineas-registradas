@@ -1,0 +1,27 @@
+{
+    "nombre": "MoBig",
+    "url": "https://mobig.mx/vinculatulinea/consulta-curp",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#curp",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "/html/body/div[1]/div/main/section/div/div/div/div[2]/div/div[2]/button"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//p[normalize-space(.)='No se encontraron números vinculados.']"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//p[normalize-space(.)='Estos son los números vinculados.']"
+        }
+    }
+}

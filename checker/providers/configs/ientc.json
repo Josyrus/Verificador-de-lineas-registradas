@@ -1,0 +1,27 @@
+{
+    "nombre": "IENTC",
+    "url": "https://vinculacion-consulta.ientc.net/",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#curpRfc",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "class",
+            "selector": "btn-primary"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//div[@role='alert' and @aria-label='Este CURP o RFC no cuenta con líneas vinculadas.']"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//table[@aria-label='Resultados de la consulta de vinculación']"
+        }
+    }
+}

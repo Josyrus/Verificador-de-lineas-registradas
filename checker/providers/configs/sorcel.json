@@ -1,0 +1,27 @@
+{
+    "nombre": "Sorcel",
+    "url": "https://www.soriup.mx/consultavinculacion",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "#curpa",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "css",
+            "selector": "#btnIniciar"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//td[contains(normalize-space(.), 'No hay registros para esa RFC/CURP')]"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//table//tr[td[contains(normalize-space(.), '5') or contains(normalize-space(.), '6') or contains(normalize-space(.), '7') or contains(normalize-space(.), '8') or contains(normalize-space(.), '9')]]"
+        }
+    }
+}

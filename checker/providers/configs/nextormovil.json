@@ -1,0 +1,27 @@
+{
+    "nombre": "Nextor Movil",
+    "url": "https://vinculacion.nextormovil.mx/consulta-vinculaciones",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[placeholder='Ej: GARC850101HDFRRL09']",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//button[contains(., 'Buscar')]"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//h2[normalize-space(.)='Sin registros encontrados']"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//h2[normalize-space(.)='Registros encontrados']"
+        }
+    }
+}

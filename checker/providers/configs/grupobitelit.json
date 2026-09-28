@@ -3,8 +3,11 @@
     "url": "https://rnu.grupobitelit.com/mx/line-status",
     "steps": [
         {
+            "action":"reach_down"
+        },
+        {
             "action":"pause",
-            "time":2
+            "time":4.5
         },
         {
             "action": "fill",
@@ -15,17 +18,29 @@
         {
             "action": "select_option",
             "type": "css",
-            "selector": "#public-line-status-identifier-value",
+            "selector": "#public-line-status-identifier-type",
             "value": "curp"
-        },
-        {
-            "action":"pause",
-            "time":5
         },
         {
             "action": "click",
             "type": "css",
             "selector": "#public-line-status-submit"
+        },
+        {
+            "action":"reach_down"
         }
-    ]
+    ],
+    "results":
+        {
+            "negative":
+            {
+                "type": "xpath",
+                "selector": "//p[normalize-space(.) = '0 líneas vinculadas encontradas para este CURP.']"
+            },
+            "positive:":{
+                "type": "xpath",
+                "selector": "//p[contains(normalize-space(.), 'líneas vinculadas encontradas para este CURP.')]"
+            }
+
+        }
 }

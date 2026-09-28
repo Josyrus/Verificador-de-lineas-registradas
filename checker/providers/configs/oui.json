@@ -1,0 +1,43 @@
+{
+    "nombre": "OUI",
+    "url": "https://vinculatulinea.com/oui/my-lines",
+    "steps": [
+        {
+            "action": "select_option",
+            "type": "css",
+            "selector": "#personType",
+            "value": "FISICA"
+        },
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[placeholder='Enter your CURP']",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//label[contains(., 'I acknowledge')]"
+        },
+        {
+            "action": "click",
+            "type": "xpath",
+            "selector": "//span[contains(., 'Continue')]"
+        },
+        {
+            "action": "wait4captcha",
+            "type": "class",
+            "selector": "puzzle-captcha-container"
+        }
+    ],
+    "results": {
+        "positive": {
+            "type": "xpath",
+            "selector": "//span[contains(., 'No cuentas con líneas')]"
+        },
+        "negative": {
+            "type": "xpath",
+            "selector": "//span[contains(., 'líneas asociadas')]"
+        }
+    }
+}

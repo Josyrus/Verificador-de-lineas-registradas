@@ -1,0 +1,27 @@
+{
+    "nombre": "Oxio",
+    "url": "https://verificar.oxiomobile.com/consultatuslineas",
+    "steps": [
+        {
+            "action": "fill",
+            "type": "css",
+            "selector": "input[formcontrolname='curp']",
+            "value": "{curp}"
+        },
+        {
+            "action": "click",
+            "type": "css",
+            "selector": "button[nztype='primary']"
+        }
+    ],
+    "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "//*[contains(normalize-space(.), 'No hay líneas registradas') or contains(normalize-space(.), 'No tienes líneas registradas')]"
+        },
+        "positive": {
+            "type": "xpath",
+            "selector": "//tbody/tr[td]"
+        }
+    }
+}

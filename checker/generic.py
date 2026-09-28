@@ -1,14 +1,16 @@
+import logging, time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
     TimeoutException,
     StaleElementReferenceException,
-    WebDriverException
+    NoSuchWindowException,
+    WebDriverException,
 )
-import json
-import time
 from storage import ESTADOS, DEFAULT_PATH, guardar
+
+logger = logging.getLogger(__name__)
 
 class GenericChecker:
 
@@ -16,286 +18,209 @@ class GenericChecker:
         self.driver = driver
         self.config = config
         self.wait = WebDriverWait(driver, 15)
+        self.driver.set_page_load_timeout(30)
+        self.driver.set_script_timeout(30)
 
     def _locator(self, step):
         if step["type"] == "css":
             return By.CSS_SELECTOR, step["selector"]
-
         if step["type"] == "xpath":
             return By.XPATH, step["selector"]
-        
         if step["type"] == "class":
             return By.CLASS_NAME, step["selector"]
+        raise ValueError(f"Tipo de selector desconocido: {step['type']}")
 
-        raise ValueError(
-            f"Tipo de selector desconocido: {step['type']}"
-        )
+    def cerrar_navegador(self):
+        
+        if not getattr(self, "driver", None):
+            return
+        try:
+            self.driver.quit()
+        except Exception as e:
+            logger.warning("Error al cerrar el navegador: %s", e)
+        finally:
+            self.driver = None
 
     def detectar_resultado(self, timeout=30):
-        estrategia = self.config.get("result_strategy", "dom")
-
-        if estrategia == "livewire":
-            return self.detectar_resultado_livewire(timeout)
-
         resultados = self.config.get("results", {})
+        locators = {estado: self._locator(step) for estado, step in resultados.items()}
 
         def buscar_resultado(driver):
-
-            for estado, step in resultados.items():
-
-                by, selector = self._locator(step)
-
-                elementos = driver.find_elements(
-                    by,
-                    selector
-                )
-
-                if elementos:
-                    return estado
-
+            for estado, (by, selector) in locators.items():
+                try:
+                    if driver.find_elements(by, selector):
+                        return estado
+                except StaleElementReferenceException:
+                    continue
             return False
 
         try:
             return WebDriverWait(
                 self.driver,
                 timeout,
-                poll_frequency=0.5
+                poll_frequency=0.5,
+                ignored_exceptions=(StaleElementReferenceException,),
             ).until(buscar_resultado)
 
         except TimeoutException:
+            logger.error("No apareció ningún resultado en %s s. Cerrando navegador.", timeout)
+            self.cerrar_navegador()
             return None
-        
-    def detectar_resultado_livewire(self, timeout=30):
-        
 
-        limite = time.time() + timeout
+        except (NoSuchWindowException, WebDriverException) as e:
+            logger.error("Error de WebDriver: %s. Cerrando navegador.", e)
+            self.cerrar_navegador()
+            return None
+            
+    def ejecutar(self, **variables):
+        paso_actual = None 
 
-        while time.time() < limite:
-
+        try:
             try:
-                componentes = self.driver.find_elements(
-                    By.CSS_SELECTOR,
-                    "[wire\\:snapshot]"
-                )
+                self.driver.get(self.config["url"])
+            except TimeoutException:
+                logger.warning("La página tardó demasiado en cargar, deteniendo carga.")
+                self.driver.execute_script("window.stop();")
 
-                for componente in componentes:
+            for i, step in enumerate(self.config["steps"], start=1):
+                action = step["action"]
+                paso_actual = f"#{i} ({action})"
 
-                    try:
-                        raw = componente.get_attribute("wire:snapshot")
+                if action == "reach_down":
+                    time.sleep(1)
+                    self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-                        if not raw:
-                            continue
+                elif action == "switch_to_frame":
+                    by, selector = self._locator(step)
+                    iframe = self.wait.until(EC.presence_of_element_located((by, selector)))
+                    self.driver.switch_to.frame(iframe)
+                    print(f"[>] Cambiado a iframe: {selector}")
 
-                        snapshot = json.loads(raw)
-                        data = snapshot.get("data", {})
+                elif action == "scroll_down":
+                    value = step.get("value", 50)
+                    self.driver.execute_script(f"window.scrollTo(0, {value});")
 
-                        if (
-                            "paso2" not in data
-                            or "encontrado" not in data
-                        ):
-                            continue
+                elif action == "fill":
+                    by, selector = self._locator(step)
+                    elemento = self.wait.until(EC.element_to_be_clickable((by, selector)))
+                    valor = step["value"].format(**variables)
 
-                        print(
-                            "[DEBUG LIVEWIRE]",
-                            json.dumps(
-                                data,
-                                indent=2,
-                                ensure_ascii=False
-                            )
+                    print(f"[>] Rellenando: {selector}")
+                    print(f"[>] Valor: {valor}")
+
+                    elemento.click()
+                    elemento.clear()
+                    elemento.send_keys(valor)
+
+                    valor_actual = elemento.get_attribute("value")
+                    print(f"[<] Campo contiene: {valor_actual}")
+
+                    if valor_actual != valor:
+                        raise RuntimeError(
+                            f"No se pudo rellenar el campo.\n"
+                            f"Esperado: {valor}\n"
+                            f"Obtenido: {valor_actual}"
                         )
 
-                        if data.get("paso2") is True:
+                elif action == "script":
+                    resultado = self.driver.execute_script(step["script"])
+                    print("[DEBUG SCRIPT]", resultado)
 
-                            if data.get("encontrado") is True:
-                                return "positive"
+                elif action == "click":
+                    by, selector = self._locator(step)
+                    timeout = step.get("timeout", 15)
 
-                            return "negative"
+                    print("\n====================")
+                    print("ACTION: CLICK")
+                    print("BY:", by)
+                    print("SELECTOR:", selector)
 
-                    except StaleElementReferenceException:
+                    elemento = WebDriverWait(self.driver, timeout).until(
+                        lambda d: (
+                            (e := d.find_element(by, selector))
+                            and e.is_displayed()
+                            and e.is_enabled()
+                            and e.get_attribute("disabled") is None
+                            and e.get_attribute("aria-disabled") != "true"
+                        ) and e
+                    )
+
+                    print("FOUND:", elemento.tag_name)
+                    print("TEXT:", repr(elemento.text))
+                    elemento.click()
+                    print("CLICK OK")
+                    print("====================")
+
+                elif action == "wait_if_captcha":
+                    by, selector = self._locator(step)
+
+                    if not self.driver.find_elements(by, selector):
+                        print("[>] CAPTCHA no presente, continuando")
                         continue
 
-            except WebDriverException as e:
-                print("[DEBUG LIVEWIRE ERROR]", e)
-
-            time.sleep(0.4)
-
-        print("[DEBUG LIVEWIRE] Timeout")
-
-        return None
-
-    def ejecutar(self, **variables):
-
-        self.driver.get(self.config["url"])
-        
-        for step in self.config["steps"]:
-            
-            action = step["action"]
-
-            if action == "reach_down":
-                time.sleep(1)
-                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-
-            elif action == "switch_to_frame":
-
-                by, selector = self._locator(step)
-
-                iframe = self.wait.until(
-                    EC.presence_of_element_located((by, selector))
-                )
-
-                self.driver.switch_to.frame(iframe)
-
-                print(f"[>] Cambiado a iframe: {selector}")
-
-                
-            elif action == "scroll_down":
-                value = step.get("value", 50)
-                self.driver.execute_script(f"window.scrollTo(0, {value});")
-
-            elif action == "fill":
-
-                by, selector = self._locator(step)
-
-                elemento = self.wait.until(
-                    EC.element_to_be_clickable(
-                        (by, selector)
+                    print("[!] CAPTCHA detectado. Esperando resolución...")
+                    WebDriverWait(self.driver, 300).until(
+                        lambda d: not d.find_elements(by, selector)
                     )
-                )
+                    print("[>] CAPTCHA resuelto, continuando")
 
-                valor = step["value"].format(**variables)
-
-                print(f"[>] Rellenando: {selector}")
-                print(f"[>] Valor: {valor}")
-                
-                elemento.click()
-                elemento.clear()
-                elemento.send_keys(valor)
-
-                valor_actual = elemento.get_attribute("value")
-
-                print(f"[<] Campo contiene: {valor_actual}")
-
-                if valor_actual != valor:
-                    raise RuntimeError(
-                        f"No se pudo rellenar el campo.\n"
-                        f"Esperado: {valor}\n"
-                        f"Obtenido: {valor_actual}"
+                elif action == "click_shadow":
+                    host = self.wait.until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, step["host"]))
                     )
-            elif action == "script":
-                resultado = self.driver.execute_script(step["script"])
-                print("[DEBUG SCRIPT]", resultado)
+                    elemento = host.shadow_root.find_element(By.CSS_SELECTOR, step["selector"])
+                    elemento.click()
 
-            elif action == "click":
-
-                by, selector = self._locator(step)
-
-                print("\n====================")
-                print("ACTION: CLICK")
-                print("BY:", by)
-                print("SELECTOR:", selector)
-
-                timeout = step.get("timeout", 15)
-
-                elemento = WebDriverWait(
-                    self.driver,
-                    timeout
-                ).until(
-                    lambda d: (
-                        (e := d.find_element(by, selector))
-                        and e.is_displayed()
-                        and e.is_enabled()
-                        and e.get_attribute("disabled") is None
-                        and e.get_attribute("aria-disabled") != "true"
-                    ) and e
-                )
-
-
-                print("FOUND:", elemento.tag_name)
-                print("TEXT:", repr(elemento.text))
-
-                elemento.click()
-
-                print("CLICK OK")
-                print("====================")
-
-            elif action == "wait_if_captcha":
-
-                by, selector = self._locator(step)
-
-                elementos = self.driver.find_elements(by, selector)
-
-                if not elementos:
-                    print("[>] CAPTCHA no presente, continuando")
-                    continue
-
-                print("[!] CAPTCHA detectado. Esperando resolución...")
-
-                WebDriverWait(self.driver, 300).until(
-                    lambda driver: not driver.find_elements(by, selector)
-                )
-
-                print("[>] CAPTCHA resuelto, continuando")
-            elif action == "click_shadow":
-                
-                host = self.wait.until(
-                    EC.presence_of_element_located(
-                        (By.CSS_SELECTOR, step["host"])
+                elif action == "fill_shadow":
+                    host_by, host_selector = self._locator({
+                        "type": step["type"],
+                        "selector": step["host"],
+                    })
+                    host = self.wait.until(
+                        EC.presence_of_element_located((host_by, host_selector))
                     )
-                )
+                    by, selector = self._locator(step)
+                    elemento = host.shadow_root.find_element(by, selector)
+                    valor = step["value"].format(**variables)
 
-                shadow = host.shadow_root
+                    print(f"[>] Rellenando Shadow DOM: {selector}")
+                    print(f"[>] Valor: {valor}")
 
-                elemento = shadow.find_element(
-                    By.CSS_SELECTOR,
-                    step["selector"]
-                )
+                    elemento.click()
+                    elemento.clear()
+                    elemento.send_keys(valor)
 
-                elemento.click()
-                
-            elif action == "fill_shadow":
-                host_by, host_selector = self._locator({
-                    "type": step["type"],
-                    "selector": step["host"]
-                })
+                elif action == "select_option":
+                    by, selector = self._locator(step)
+                    elemento = self.wait.until(EC.presence_of_element_located((by, selector)))
+                    Select(elemento).select_by_value(step["value"])
 
-                host = self.wait.until(
-                    EC.presence_of_element_located(
-                        (host_by, host_selector)
-                    )
-                )
+                elif action == "wait4captcha":
+                    by, selector = self._locator(step)
+                    self.wait.until(EC.invisibility_of_element_located((by, selector)))
 
-                shadow = host.shadow_root
+                    WebDriverWait(self.driver, 300).until(EC.alert_is_present())
+                    self.driver.switch_to.alert.accept()
 
-                by, selector = self._locator(step)
+                elif action == "pause":
+                    time.sleep(step.get("time", 1))
 
-                elemento = shadow.find_element(by, selector)
+                else:
+                    raise ValueError(f"Acción desconocida: {action}")
 
-                valor = step["value"].format(**variables)
+            return self.detectar_resultado()
 
-                print(f"[>] Rellenando Shadow DOM: {selector}")
-                print(f"[>] Valor: {valor}")
+        except TimeoutException:
+            logger.error("Timeout en el paso %s. Cerrando navegador.", paso_actual)
+            self.cerrar_navegador()
+            return None
 
-                elemento.click()
-                elemento.clear()
-                elemento.send_keys(valor)
+        except (NoSuchWindowException, WebDriverException) as e:
+            logger.error("Error de WebDriver en el paso %s: %s. Cerrando navegador.", paso_actual, e)
+            self.cerrar_navegador()
+            return None
 
-            elif action == "select_option":
-                by, selector = self._locator(step)
-
-                elemento = self.wait.until(
-                    EC.presence_of_element_located((by, selector))
-                )
-                Select(elemento).select_by_value(step["value"])
-                
-            elif action == "wait4captcha":
-                by, selector = self._locator(step)
-                
-                elemento = self.wait.until(
-                    EC.invisibility_of_element_located((by, selector))
-                )
-
-            elif action == "pause":
-                time.sleep(step.get("time", 1))
-            
-        return self.detectar_resultado()
+        except Exception:
+            logger.exception("Error inesperado en el paso %s", paso_actual)
+            self.cerrar_navegador()
+            raise
