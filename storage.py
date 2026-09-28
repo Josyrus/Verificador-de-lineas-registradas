@@ -4,11 +4,13 @@ de configuración del usuario, para poder cerrar la app y seguir después."""
 
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 
 from carriers import CARRIERS
 
 ESTADOS = ["Pendiente", "Línea encontrada", "Sin línea", "No se pudo revisar"]
+MAX_HISTORIAL = 20
 
 
 def _config_dir() -> Path:
@@ -30,7 +32,8 @@ def nuevo_progreso() -> dict:
         "navegador": "Firefox",
         "perfil": "",
         "resultados": {
-            nombre: {"estado": "Pendiente", "notas": ""} for nombre, _url in CARRIERS
+            nombre: {"estado": "Pendiente", "notas": "", "fecha": "", "historial": []}
+            for nombre, _url in CARRIERS
         },
     }
 
@@ -51,8 +54,26 @@ def cargar(path: Path = DEFAULT_PATH) -> dict:
     resultados_guardados = data.get("resultados", {})
     for nombre in base["resultados"]:
         if nombre in resultados_guardados:
-            base["resultados"][nombre] = resultados_guardados[nombre]
+            # update() conserva los campos nuevos (fecha, historial) con su
+            # valor por defecto si el progreso.json es de una versión anterior
+            base["resultados"][nombre].update(resultados_guardados[nombre])
     return base
+
+
+def registrar_estado(data: dict, nombre: str, estado: str, notas=None) -> None:
+    """Cambia el estado de una compañía y deja constancia de cuándo y qué
+    se marcó (fecha de última verificación + historial acotado). Usar esto
+    en GUI y CLI en vez de escribir data["resultados"][nombre] a mano."""
+    r = data["resultados"][nombre]
+    ahora = datetime.now().isoformat(timespec="seconds")
+    r["estado"] = estado
+    r["fecha"] = ahora
+    if notas is not None:
+        r["notas"] = notas
+    historial = r.setdefault("historial", [])
+    historial.append({"fecha": ahora, "estado": estado})
+    del historial[:-MAX_HISTORIAL]
+
 
 def guardar(data: dict, path: Path = DEFAULT_PATH) -> None:
     tmp = Path(str(path) + ".tmp")

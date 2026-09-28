@@ -17,7 +17,7 @@ from pathlib import Path
 from carriers import CARRIERS, buscar
 from clipboard import copy_to_clipboard
 from checker.perfiles import NAVEGADORES, detectar_perfiles
-from storage import ESTADOS, DEFAULT_PATH, cargar, guardar
+from storage import ESTADOS, DEFAULT_PATH, cargar, guardar, registrar_estado
 from checker.runner import CheckerRunner
 
 USAR_COLOR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
@@ -263,7 +263,7 @@ def revisar(runner, data: dict, path, nombre: str, url: str) -> bool:
         previas = data["resultados"][nombre]["notas"]
         notas = input("Notas (Enter = conservar): ").strip() or previas
 
-        data["resultados"][nombre] = {"estado": estado, "notas": notas}
+        registrar_estado(data, nombre, estado, notas)
         guardar(data, path)
         print("[✓] Progreso guardado.")
         return True
@@ -278,10 +278,7 @@ def revisar(runner, data: dict, path, nombre: str, url: str) -> bool:
         print(f"[!] Error al revisar {nombre}:")
         print(f"    {type(e).__name__}: {e}")
 
-        data["resultados"][nombre] = {
-            "estado": ESTADOS[3],
-            "notas": f"{type(e).__name__}: {e}",
-        }
+        registrar_estado(data, nombre, ESTADOS[3], f"{type(e).__name__}: {e}")
         guardar(data, path)
         print("[!] Estado guardado como 'No se pudo revisar'.")
         return True
@@ -360,9 +357,7 @@ def marcar(data: dict, path, texto: str, estado_txt: str, notas) -> None:
         return
 
     nombre, _url = compania
-    data["resultados"][nombre]["estado"] = estado
-    if notas is not None:
-        data["resultados"][nombre]["notas"] = notas
+    registrar_estado(data, nombre, estado, notas)
 
     guardar(data, path)
     print(f"{punto(estado)} {nombre}: {estado}")

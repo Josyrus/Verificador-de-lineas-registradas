@@ -4,18 +4,20 @@ tabla, deja marcar el estado de cada una a mano después de revisar el
 portal oficial (no automatiza CAPTCHAs), y guarda/exporta el progreso."""
 
 import sys
-from pathlib import Path  
+import zlib
+from datetime import datetime
+from pathlib import Path
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, QThread, QTimer
-from PySide6.QtGui import QDesktopServices, QAction, QIcon, QPixmap, QPainter, QFont, QColor
+from PySide6.QtGui import QDesktopServices, QAction, QIcon, QPixmap, QPainter, QFont, QColor, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem,
     QComboBox, QHeaderView, QFileDialog, QMessageBox, QStatusBar, QButtonGroup,
+    QPlainTextEdit,
 )
-import random
 from carriers import CARRIERS, PORTAL_ALIASES, buscar
 from checker.perfiles import NAVEGADORES, detectar_perfiles
-from storage import ESTADOS, DEFAULT_PATH, cargar, guardar
+from storage import ESTADOS, DEFAULT_PATH, cargar, guardar, registrar_estado
 from checker.worker import CheckerWorker
 from checker.runner import CheckerRunner
 
@@ -160,80 +162,19 @@ class VentanaPrincipal(QMainWindow):
         self.tabla.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         layout_tabla_e_info.addWidget(self.tabla)
         
-        #Barra lateral
-        
-        self.info_compania_qwidget = QWidget()
-        self.info_compania_qwidget.setMaximumWidth(0)
-        self.info_compania_qwidget.setMinimumWidth(0)
-        info_compañia = QVBoxLayout(self.info_compania_qwidget)
-                
-        info_compañia.setContentsMargins(12, 12, 12, 12)
-        info_compañia.setSpacing(8)
-
-
-        detalle_compañia = QLabel("Detalles:") 
-        info_compañia.addWidget(detalle_compañia)
-
-        layout_info_compañia = QHBoxLayout()
-        layout_info_compañia.setSpacing(6)
-
-        icono = QLabel("logo")
-        nombre_compañia = QLabel("Nombre Compañia")
-        sitio_compañia = QPushButton("Abrir")
-        layout_info_compañia.addWidget(icono)
-        layout_info_compañia.addWidget(nombre_compañia)
-        layout_info_compañia.addWidget(sitio_compañia)
-        info_compañia.addLayout(layout_info_compañia)
-
-        layout_estado_actual = QHBoxLayout()
-        layout_estado_actual.setSpacing(6)
-
-        estado_compañia_acutal = QLabel("Estado Actual")
-        estado_compañia = QLabel("Estado")
-        layout_estado_actual.addWidget(estado_compañia_acutal)
-        layout_estado_actual.addWidget(estado_compañia)
-        info_compañia.addLayout(layout_estado_actual)
-
-        layout_fecha_verificacion = QHBoxLayout()
-        layout_fecha_verificacion.setSpacing(6)
-        
-        ultima_verificacion = QLabel("Última verificación")
-        fecha_verificacion = QLabel("Fecha")
-        layout_fecha_verificacion.addWidget(ultima_verificacion)
-        layout_fecha_verificacion.addWidget(fecha_verificacion)
-        info_compañia.addLayout(layout_fecha_verificacion)
-
-        layout_notas= QVBoxLayout()
-        layout_notas.setSpacing(6)
-
-        notas = QLabel("Notas")
-        texto_nota = QLineEdit()
-        texto_nota.setPlaceholderText("Añade una nota sobre esta consulta...")
-        layout_notas.addWidget(notas)
-        layout_notas.addWidget(texto_nota)
-        info_compañia.addLayout(layout_notas)
-
-        layout_historial = QVBoxLayout()
-        layout_historial.setSpacing(6)
-
-        historial = QLabel("Historial")
-        historial_lista  = QLabel("...")
-        layout_historial.addWidget(historial)
-        layout_historial.addWidget(historial_lista)
-        info_compañia.addLayout(layout_historial)
-        
-        info_compañia.addStretch()
-
-
-        layout_estado = QHBoxLayout()
-        estado_actual = QLabel("Estado actual")
-        layout_estado.addWidget(estado_actual)
-
-
+        # Panel lateral de detalles: oculto hasta que se hace clic en una fila
+        self._panel_nombre = None
+        self._panel_url = ""
+        self.info_compania_qwidget = self._construir_panel()
         layout_tabla_e_info.addWidget(self.info_compania_qwidget)
         self.info_compania_qwidget.setVisible(False)
 
-        #Debe estar oculta para no molestar visualmente, sólo se abre cuando hacen click dos veces
+        self.tabla.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.tabla.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.tabla.cellClicked.connect(lambda fila, _col: self._mostrar_panel(fila))
+        # con el panel abierto, moverse con las flechas también lo actualiza
+        self.tabla.currentCellChanged.connect(self._fila_actual_cambio)
+        QShortcut(QKeySequence(Qt.Key.Key_Escape), self, activated=self._ocultar_panel)
 
         layout.addLayout(layout_tabla_e_info)
         
@@ -250,6 +191,159 @@ class VentanaPrincipal(QMainWindow):
         aviso.setWordWrap(True)
         aviso.setStyleSheet("color: #666; font-size: 11px; padding-top: 4px;")
         layout.addWidget(aviso)
+
+    # ---------- panel lateral de detalles ----------
+
+    def _construir_panel(self):
+        panel = QWidget()
+        panel.setFixedWidth(300)
+        v = QVBoxLayout(panel)
+        v.setContentsMargins(12, 12, 12, 12)
+        v.setSpacing(8)
+
+        cab = QHBoxLayout()
+        titulo = QLabel("<b>Detalles</b>")
+        cerrar = QPushButton("✕")
+        cerrar.setFlat(True)
+        cerrar.setFixedWidth(28)
+        cerrar.setToolTip("Cerrar (Esc)")
+        cerrar.clicked.connect(self._ocultar_panel)
+        cab.addWidget(titulo)
+        cab.addStretch()
+        cab.addWidget(cerrar)
+        v.addLayout(cab)
+
+        fila = QHBoxLayout()
+        fila.setSpacing(6)
+        self.panel_avatar_layout = QHBoxLayout()
+        self.panel_nombre = QLabel("")
+        self.panel_nombre.setWordWrap(True)
+        self.panel_nombre.setStyleSheet("font-weight: bold;")
+        self.panel_abrir = QPushButton("Abrir")
+        self.panel_abrir.clicked.connect(
+            lambda: self._panel_nombre and self._abrir_portal(self._panel_nombre, self._panel_url)
+        )
+        fila.addLayout(self.panel_avatar_layout)
+        fila.addWidget(self.panel_nombre, 1)
+        fila.addWidget(self.panel_abrir)
+        v.addLayout(fila)
+
+        self.panel_url_label = QLabel("")
+        self.panel_url_label.setOpenExternalLinks(True)
+        self.panel_url_label.setWordWrap(True)
+        self.panel_url_label.setStyleSheet("font-size: 11px;")
+        v.addWidget(self.panel_url_label)
+
+        # Redes ALTÁN agrupa decenas de proveedores: lista con scroll y altura acotada
+        self.panel_alias = QPlainTextEdit()
+        self.panel_alias.setReadOnly(True)
+        self.panel_alias.setMaximumHeight(90)
+        self.panel_alias.setFrameShape(QPlainTextEdit.Shape.NoFrame)
+        self.panel_alias.setStyleSheet("background: transparent; color: #666; font-size: 11px;")
+        v.addWidget(self.panel_alias)
+
+        self.panel_estado = QLabel("")
+        self.panel_estado.setTextFormat(Qt.TextFormat.RichText)
+        self.panel_fecha = QLabel("")
+        for etiqueta, valor in (("Estado actual", self.panel_estado),
+                                ("Última verificación", self.panel_fecha)):
+            f = QHBoxLayout()
+            f.setSpacing(6)
+            f.addWidget(QLabel(etiqueta))
+            f.addStretch()
+            f.addWidget(valor)
+            v.addLayout(f)
+
+        v.addWidget(QLabel("Notas"))
+        self.panel_notas = QLineEdit()
+        self.panel_notas.setPlaceholderText("Añade una nota sobre esta consulta...")
+        self.panel_notas.editingFinished.connect(self._panel_guardar_notas)
+        v.addWidget(self.panel_notas)
+
+        v.addWidget(QLabel("Historial"))
+        self.panel_historial = QLabel("")
+        self.panel_historial.setTextFormat(Qt.TextFormat.RichText)
+        self.panel_historial.setWordWrap(True)
+        self.panel_historial.setAlignment(Qt.AlignmentFlag.AlignTop)
+        v.addWidget(self.panel_historial)
+
+        v.addStretch()
+        return panel
+
+    def _datos_fila(self, fila):
+        contenedor = self.tabla.cellWidget(fila, COL_COMPANIA)
+        if contenedor is None:
+            return None
+        return contenedor.property("nombre"), contenedor.property("url")
+
+    def _mostrar_panel(self, fila):
+        datos = self._datos_fila(fila)
+        if datos is None:
+            return
+        nombre, url = datos
+        if nombre != self._panel_nombre:
+            self.panel_notas.clearFocus()  # guarda la nota pendiente de la compañía anterior
+            self._panel_nombre, self._panel_url = nombre, url
+            # el avatar se recrea porque un QLabel no puede estar en dos layouts
+            while self.panel_avatar_layout.count():
+                w = self.panel_avatar_layout.takeAt(0).widget()
+                if w is not None:
+                    w.deleteLater()
+            self.panel_avatar_layout.addWidget(self.crear_avatar(nombre))
+            self.panel_nombre.setText(nombre)
+            self.panel_url_label.setText(f'<a href="{url}">{url}</a>')
+            alias = [a for a, portal in PORTAL_ALIASES.items() if portal == nombre]
+            self.panel_alias.setPlainText(
+                f"Incluye {len(alias)} proveedores: " + ", ".join(alias) if alias else "")
+            self.panel_alias.setVisible(bool(alias))
+        self._refrescar_panel()
+        self.info_compania_qwidget.setVisible(True)
+
+    def _fila_actual_cambio(self, fila, _col, _fila_prev, _col_prev):
+        if fila >= 0 and self.info_compania_qwidget.isVisible():
+            self._mostrar_panel(fila)
+
+    def _ocultar_panel(self):
+        self.panel_notas.clearFocus()
+        self.info_compania_qwidget.setVisible(False)
+        self._panel_nombre = None
+
+    @staticmethod
+    def _formatear_fecha(iso):
+        try:
+            return datetime.fromisoformat(iso).strftime("%d/%m/%Y %H:%M")
+        except (TypeError, ValueError):
+            return "Nunca"
+
+    def _refrescar_panel(self):
+        if not self._panel_nombre:
+            return
+        r = self.data["resultados"][self._panel_nombre]
+        self.panel_estado.setText(self.texto_estado_con_punto(r["estado"]))
+        self.panel_fecha.setText(self._formatear_fecha(r.get("fecha")))
+        if not self.panel_notas.hasFocus():
+            self.panel_notas.setText(r["notas"])
+        historial = r.get("historial", [])
+        if historial:
+            self.panel_historial.setText("<br>".join(
+                f'{self._formatear_fecha(h["fecha"])} — {self.texto_estado_con_punto(h["estado"])}'
+                for h in reversed(historial[-10:])
+            ))
+        else:
+            self.panel_historial.setText("Sin registros todavía.")
+
+    def _panel_guardar_notas(self):
+        if self._panel_nombre:
+            self._cambiar_notas(self._panel_nombre, self.panel_notas.text())
+
+    def _sincronizar_notas_tabla(self, nombre, texto):
+        for row in range(self.tabla.rowCount()):
+            c = self.tabla.cellWidget(row, COL_COMPANIA)
+            if c is not None and c.property("nombre") == nombre:
+                w = self.tabla.cellWidget(row, COL_NOTAS)
+                if w is not None and w.text() != texto:
+                    w.setText(texto)
+                break
 
     # ---------- construcción de la tabla ----------
 
@@ -356,7 +450,7 @@ class VentanaPrincipal(QMainWindow):
     ]
 
         pixmap = QPixmap(size, size)
-        pixmap.fill(random.choice(colores))
+        pixmap.fill(colores[zlib.crc32(nombre.encode()) % len(colores)])
 
         painter = QPainter(pixmap)
 
@@ -385,13 +479,20 @@ class VentanaPrincipal(QMainWindow):
         guardar(self.data, DEFAULT_PATH)
 
     def _cambiar_estado(self, nombre, estado):
-        self.data["resultados"][nombre]["estado"] = estado
+        registrar_estado(self.data, nombre, estado)
         guardar(self.data, DEFAULT_PATH)
         self._actualizar_resumen()
+        if nombre == self._panel_nombre:
+            self._refrescar_panel()
 
     def _cambiar_notas(self, nombre, texto):
         self.data["resultados"][nombre]["notas"] = texto
         guardar(self.data, DEFAULT_PATH)
+        self._sincronizar_notas_tabla(nombre, texto)
+        if nombre == self._panel_nombre:
+            if self.panel_notas.text() != texto:  # la nota se editó desde la tabla
+                self.panel_notas.setText(texto)
+            self._refrescar_panel()
 
     def _abrir_portal(self, nombre, url):
         curp = self.campo_curp.text().strip().upper()
@@ -531,11 +632,11 @@ class VentanaPrincipal(QMainWindow):
     def _seleccionar_fila(self, nombre):
         for row in range(self.tabla.rowCount()):
             contenedor = self.tabla.cellWidget(row, COL_COMPANIA)
-            nombre_compañia = contenedor.property("nombre").lower()
-            if nombre_compañia == nombre:
+            if contenedor.property("nombre") == nombre:
                 self.tabla.selectRow(row)
-                self.tabla.scrollToItem(self.tabla.item(row, COL_COMPANIA))
+                self.tabla.scrollTo(self.tabla.model().index(row, COL_COMPANIA))
                 break
+    @staticmethod
     def texto_estado_con_punto(estado: str) -> str:
         color = COLOR_ESTADO.get(estado, "#9e9e9e")
         return f'<span style="color:{color};">●</span>&nbsp;{estado}'
