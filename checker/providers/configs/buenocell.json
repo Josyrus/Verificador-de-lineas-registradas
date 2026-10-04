@@ -9,9 +9,6 @@
             "value": "{curp}"
         },
         {
-<<<<<<< HEAD
-            "action": "pause"
-=======
             "action": "wait_if_captcha",
             "type": "css",
             "selector": "button.primary[disabled]"
@@ -19,17 +16,11 @@
         {
             "action": "pause",
             "time": 0.8
->>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
         },
         {
             "action": "click",
             "type": "xpath",
-<<<<<<< HEAD
-            "timeout": 300,
-            "selector": "/html/body/div[1]/div/main/section/div/div[4]/button"
-=======
             "selector": "//button[contains(., 'Consultar')]"
->>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
         }
     ],
     "results": {

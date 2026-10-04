@@ -1,31 +1,5 @@
 {
     "nombre": "Yo mobile",
     "url": "https://mx.yomobile.com/consulta",
-<<<<<<< HEAD
-    "steps": [
-        {
-            "action": "fill",
-            "type": "css",
-            "selector": "input[type='text'][autocomplete='off']",
-            "value": "{curp}"
-        },
-        {
-            "action": "click",
-            "type": "css",
-            "selector": "button[type='submit']"
-        }
-    ],
-    "results": {
-        "positive": {
-            "type": "css",
-            "selector": "section[aria-labelledby='lines-heading'] ul[role='list'] li div[role='button']"
-        },
-        "negative": {
-            "type": "css",
-            "selector": "div[role='status']"
-        }
-    }
-=======
     "template": "vinculacionfreedompop"   
->>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }

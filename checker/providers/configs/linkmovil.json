@@ -1,45 +1,5 @@
 {
     "nombre":"Link Móvil",
     "url":"https://movil.linkteconectamos.com/consultar-vinculacion/",
-<<<<<<< HEAD
-    "steps":[
-        {
-            "action": "scroll_down",
-            "value": 350
-        },
-        {
-            "action": "switch_to_frame",
-            "type": "css",
-            "selector": "iframe[src*='consulta-vinculacion']"
-        },
-        {
-            "action": "fill",
-            "type": "css",
-            "selector": "input[placeholder='Ej: GARC850101HDFRRL09']",
-            "value": "{curp}"
-        },
-        {
-            "action": "click",
-            "type": "css",
-            "selector": "input#privacy"
-        },
-        {
-            "action": "click",
-            "type": "xpath",
-            "selector": "//button[contains(., 'BUSCAR MIS LÍNEAS')]"
-        }
-    ],
-    "results": {
-        "positive": {
-            "type": "xpath",
-            "selector": "//div[contains(., 'línea(s) vinculada(s)')]"
-        },
-        "negative": {
-            "type": "xpath",
-            "selector": "//div[contains(@class, 'swal2-popup')]"
-        }
-    }
-=======
     "template":"vinulacioniframe"
->>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }

@@ -1,0 +1,62 @@
+name: Build Windows
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install PySide6 pyinstaller
+
+      - name: Versión
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          else
+            echo "VERSION=0.0.0-dev" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --windowed --name VerificadorLineas \
+            --hidden-import app_gui --hidden-import app_cli \
+            main.py
+
+      - name: Empaquetar zip
+        shell: bash
+        run: 7z a VerificadorLineas-windows.zip ./dist/VerificadorLineas
+
+      - name: Instalador
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" installer\windows.iss
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VerificadorLineas-windows
+          path: |
+            VerificadorLineas-windows.zip
+            dist-installer/*.exe
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            VerificadorLineas-windows.zip
+            dist-installer/*.exe

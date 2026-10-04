@@ -1,35 +1,5 @@
 {
     "nombre": "Por Amor a Puebla Conecta",
     "url": "https://www.poramorapueblaconecta.com/consulta-vinculacion",
-<<<<<<< HEAD
-    "steps": [
-        {
-            "action": "fill",
-            "type": "css",
-            "selector": "input[placeholder='CUSR850120HOCRLN05']",
-            "value": "{curp}"
-        },
-        {
-            "action": "pause",
-            "time": 4
-        },
-        {
-            "action": "click",
-            "type": "xpath",
-            "selector": "//button[contains(., 'Continuar')]"
-        }
-    ],
-    "results": {
-        "negative": {
-            "type": "xpath",
-            "selector": "//div[contains(.,'No se encontraron líneas vinculadas')]"
-        },
-        "positive": {
-            "type": "xpath",
-            "selector": "//table[.//th[normalize-space(.)='Línea'] and .//th[normalize-space(.)='Folio']]"
-        }
-    }
-=======
     "template":"vinculacioninxel"
->>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }
