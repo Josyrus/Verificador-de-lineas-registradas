@@ -1,8 +1,6 @@
 {
-    "nombre": "Freedompop",
-    "url": "https://vinculatulinea.com/freedompop/my-lines",
-<<<<<<< HEAD
     "steps": [
+        
         {
             "action": "select_option",
             "type": "css",
@@ -32,16 +30,13 @@
         }
     ],
     "results": {
+        "negative": {
+            "type": "xpath",
+            "selector": "/html/body/app-root/div/app-info-modal/div/div/div[1]/p"
+        },
         "positive": {
             "type": "xpath",
-            "selector": "//span[contains(., 'No cuentas con líneas')]"
-        },
-        "negative": {
-            "type": "css",
-            "selector": "#modal-title"
+            "selector": "//app-curp-input//app-info-modal//h3[@id='modal-title' and not(contains(normalize-space(.), 'No registered lines found')) and normalize-space(.)!='']"
         }
     }
-=======
-    "template": "vinculacionfreedompop"   
->>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }

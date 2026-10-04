@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "nombre": "Telcel",
     "url": "https://registro.telcel.com/vinculatulinea/#/",
     "steps": [
@@ -51,3 +52,56 @@
         }
     }
 }
+=======
+  "nombre": "Telcel",
+  "url": "https://registro.telcel.com/vinculatulinea/#/",
+  "steps": [
+    {
+      "action": "click",
+      "type": "xpath",
+      "selector": "/html/body/app-root/app-biometric-home/main/div[2]/div/div[4]/button[2]"
+    },
+    {
+      "action": "click",
+      "type": "css",
+      "selector": "#personType"
+    },
+    {
+      "action": "click",
+      "type": "xpath",
+      "selector": "//li[@role='option' and normalize-space(.)='INDIVIDUAL PERSON']"
+    },
+    {
+      "action": "fill",
+      "type": "css",
+      "selector": "input[type='curp']",
+      "value": "{curp}"
+    },
+    {
+      "action": "click",
+      "type": "css",
+      "selector": "#acceptPolicy"
+    },
+    {
+      "action": "click",
+      "type": "css",
+      "selector": "/html/body/app-root/app-my-lines-person-type-step/section/div/button"
+    },
+    {
+      "action": "wait4captcha",
+      "type": "class",
+      "selector": "puzzle-captcha-overlay"
+    }
+  ],
+  "results": {
+    "negative": {
+      "type": "xpath",
+      "selector": "/html/body/app-modal/div[1]"
+    },
+    "positive": {
+      "type": "xpath",
+      "selector": "/html/body/app-root/app-my-lines-id-selection-step/section/div[2]/button"
+    }
+  }
+}
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)

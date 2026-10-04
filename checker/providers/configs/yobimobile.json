@@ -1,6 +1,7 @@
 {
     "nombre": "Yobi Telecom",
     "url": "https://vinculatulinea.com/yobitelecom/my-lines",
+<<<<<<< HEAD
     "steps": [
         {
             "action": "select_option",
@@ -40,4 +41,7 @@
             "selector": "#modal-title"
         }
     }
+=======
+    "template": "vinculacionfreedompop"   
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }

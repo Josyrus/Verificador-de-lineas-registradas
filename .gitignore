@@ -1,2 +1,14 @@
+<<<<<<< HEAD
 __pycache__
 .venv
+=======
+__pycache__/
+*.py[cod]
+*.tmp
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)

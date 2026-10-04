@@ -1,7 +1,4 @@
 {
-    "nombre": "Inxel",
-    "url": "https://inxel.mx/consulta-vinculacion",
-<<<<<<< HEAD
     "steps": [
         {
             "action": "fill",
@@ -29,7 +26,4 @@
             "selector": "//table[.//th[normalize-space(.)='Línea'] and .//th[normalize-space(.)='Folio']]"
         }
     }
-=======
-    "template":"vinculacioninxel"
->>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }

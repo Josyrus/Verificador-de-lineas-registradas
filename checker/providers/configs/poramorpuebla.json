@@ -1,6 +1,7 @@
 {
     "nombre": "Por Amor a Puebla Conecta",
     "url": "https://www.poramorapueblaconecta.com/consulta-vinculacion",
+<<<<<<< HEAD
     "steps": [
         {
             "action": "fill",
@@ -28,4 +29,7 @@
             "selector": "//table[.//th[normalize-space(.)='Línea'] and .//th[normalize-space(.)='Folio']]"
         }
     }
+=======
+    "template":"vinculacioninxel"
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }

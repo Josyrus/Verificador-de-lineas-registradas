@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "nombre": "Abib/Internet del Bienestar",
+=======
+  "nombre": "Abib/Internet del Bienestar CAMBIARON A REDES ALTAN PIPIPIPI",
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
   "url": "https://www.abibinternetdelbienestar.mx/consultatulinea",
   "steps": [
     {

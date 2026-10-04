@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "nombre": "Grupo Bitelit",
     "url": "https://rnu.grupobitelit.com/mx/line-status",
     "steps": [
@@ -44,3 +45,47 @@
 
         }
 }
+=======
+  "nombre": "Grupo Bitelit",
+  "url": "https://rnu.grupobitelit.com/mx/line-status",
+  "steps": [
+    {
+      "action": "reach_down"
+    },
+    {
+      "action": "pause",
+      "time": 4.5
+    },
+    {
+      "action": "fill",
+      "type": "css",
+      "selector": "#public-line-status-identifier-value",
+      "value": "{curp}"
+    },
+    {
+      "action": "select_option",
+      "type": "css",
+      "selector": "#public-line-status-identifier-type",
+      "value": "curp"
+    },
+    {
+      "action": "click",
+      "type": "css",
+      "selector": "#public-line-status-submit"
+    },
+    {
+      "action": "reach_down"
+    }
+  ],
+  "results": {
+    "negative": {
+      "type": "xpath",
+      "selector": "//p[normalize-space(.) = '0 líneas vinculadas encontradas para este CURP.']"
+    },
+    "positive": {
+      "type": "xpath",
+      "selector": "//p[contains(normalize-space(.), 'líneas vinculadas encontradas para este CURP.')]"
+    }
+  }
+}
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)

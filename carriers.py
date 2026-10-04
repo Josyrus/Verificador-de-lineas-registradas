@@ -11,7 +11,11 @@ de Altán y comparten el mismo portal de consulta
 ("https://rnu.altanredes.com/consulta"). En vez de repetir esa fila ~90
 veces, se agrupan en una sola entrada "Redes ALTÁN" y sus nombres
 comerciales se guardan en PORTAL_ALIASES para que el buscador los siga
+<<<<<<< HEAD
 encontrando (ver buscar()).
+=======
+encontrando.
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 """
 
 CARRIERS = [
@@ -19,7 +23,10 @@ CARRIERS = [
     ("Freedompop", "https://vinculatulinea.com/freedompop/my-lines"), # Provedor virtual de Telcel
     ("Bestel", "https://facturacion.bestel.com.mx"), #Revisar login PD:2 no tengo idea que tenga que ver con Cablecom y tampoco las ganas de descubrirlo
     ("Abib", "https://abib.com.mx/#/consultatuslineas"),
+<<<<<<< HEAD
     ("Abib/Internet del Bienestar", "https://www.abibinternetdelbienestar.mx/consultatulinea"),
+=======
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
     ("ALLCE", "https://vinculacion.allce.mx/consulta"),
     ("Alestra móvil", "https://vinculatulinea.alestra.mx/alestra-movil/vinculacion"),
     ("AT&T, Unefon y WIM marca digital AT&T", "https://att.com.mx/controlpersonal"),
@@ -72,11 +79,19 @@ CARRIERS = [
     ("Yu Movil", "https://www.yumovil.com.mx/login") #otro jodido login
 ]
 
+<<<<<<< HEAD
 # Nombres comerciales que corren sobre otras redes telcel, altan, diri
+=======
+# Nombres comerciales que corren sobre otras redes telcel, altan
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 PORTAL_ALIASES = {
     "2y2x": "Redes ALTÁN",
     "Abafon": "Redes ALTÁN",
     "Abix": "Redes ALTÁN",
+<<<<<<< HEAD
+=======
+    "Abib/Internet del Bienestar":"Redes ALTÁN",
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
     "Addinteli": "Redes ALTÁN",
     "AI Telecomm": "Redes ALTÁN",
     "Appcel": "Redes ALTÁN",
@@ -177,6 +192,7 @@ PORTAL_ALIASES = {
 
 
 
+<<<<<<< HEAD
 _CARRIERS_BY_NAME = {nombre: url for nombre, url in CARRIERS}
 
 
@@ -188,11 +204,24 @@ def _normalizar(texto: str) -> str:
 
 
 def buscar(texto: str):
+=======
+_CARRIERS_BY_NAME = {name: url for name, url in CARRIERS}
+
+
+def _normalize_text(text: str) -> str:
+    import unicodedata
+    normalized_text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return normalized_text.lower()
+
+
+def search_carriers(text: str):
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
     """Busca `texto` entre los nombres de CARRIERS y entre PORTAL_ALIASES.
     Regresa una lista de tuplas (nombre_a_mostrar, url, alias_de) donde
     alias_de es None si el match fue directo, o el nombre comercial que
     escribió el usuario si el match vino de un alias.
     """
+<<<<<<< HEAD
     texto = _normalizar((texto or "").strip())
     if not texto:
         return [(nombre, url, None) for nombre, url in CARRIERS]
@@ -211,3 +240,23 @@ def buscar(texto: str):
             vistos.add(nombre_real)
 
     return resultados
+=======
+    text = _normalize_text((text or "").strip())
+    if not text:
+        return [(name, url, None) for name, url in CARRIERS]
+
+    results = []
+    vistos = set()
+
+    for name, url in CARRIERS:
+        if text in _normalize_text(name):
+            results.append((name, url, None))
+            vistos.add(name)
+
+    for alias, nombre_real in PORTAL_ALIASES.items():
+        if text in _normalize_text(alias) and nombre_real not in vistos:
+            results.append((nombre_real, _CARRIERS_BY_NAME[nombre_real], alias))
+            vistos.add(nombre_real)
+
+    return results
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)

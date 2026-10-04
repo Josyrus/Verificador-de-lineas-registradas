@@ -1,6 +1,7 @@
 {
     "nombre": "Yo mobile",
     "url": "https://mx.yomobile.com/consulta",
+<<<<<<< HEAD
     "steps": [
         {
             "action": "fill",
@@ -24,4 +25,7 @@
             "selector": "div[role='status']"
         }
     }
+=======
+    "template": "vinculacionfreedompop"   
+>>>>>>> 4197789 (Reestructuración del proyecto a un MVC funcional)
 }
